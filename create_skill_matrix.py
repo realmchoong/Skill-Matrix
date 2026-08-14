@@ -553,7 +553,7 @@ def build_years(wb: Workbook) -> None:
     ws["A3"] = (
         '=IF(COUNTIF($B$8:$B$23,YEAR(TODAY()))>0,'
         '"Calendar year "&YEAR(TODAY())&" is already a column on Ratings. '
-        'Open Ratings and enter this year\'s 1–5 scores. Then on Skill Matrix pick a year pair '
+        'Open Ratings and enter this year\'s 1-5 scores. Then on Skill Matrix pick a year pair '
         '(for example "&YEAR(TODAY())-1&" vs "&YEAR(TODAY())&") to glance at the whole crew. '
         'Next years through 2034 are already waiting.",'
         '"New calendar year "&YEAR(TODAY())&" is not in the list yet. Type "&YEAR(TODAY())'
@@ -566,8 +566,8 @@ def build_years(wb: Workbook) -> None:
     ws.merge_cells("F5:H6")
     ws["F5"] = (
         '=IF(COUNTIF($B$8:$B$23,YEAR(TODAY()))>0,'
-        'HYPERLINK("#\'Ratings\'!A1","Rate "&YEAR(TODAY())&" on Ratings →"),'
-        'HYPERLINK("#Years!B20","Type "&YEAR(TODAY())&" in the yellow row →"))'
+        'HYPERLINK("#\'Ratings\'!A1","Rate "&YEAR(TODAY())&" on Ratings"),'
+        'HYPERLINK("#Years!B20","Type "&YEAR(TODAY())&" in the yellow row"))'
     )
     ws["F5"].font = font(13, bold=True, color=WHITE, underline="single")
     ws["F5"].fill = fill(NAVY)
@@ -927,9 +927,9 @@ def build_matrix(wb: Workbook) -> None:
     ws["C3"].border = MED
 
     ws["D3"] = "Earlier"
-    ws["E3"] = '=IFERROR(--LEFT($B$3,4),"")'
+    ws["E3"] = '=IFERROR(VALUE(LEFT($B$3,4)),"")'
     ws["F3"] = "Later"
-    ws["G3"] = '=IFERROR(--RIGHT($B$3,4),"")'
+    ws["G3"] = '=IFERROR(VALUE(RIGHT($B$3,4)),"")'
     ws["D3"].font = font(10, bold=True, color=WHITE)
     ws["D3"].fill = fill("5B8FB9")
     ws["D3"].alignment = align("center")
@@ -947,14 +947,17 @@ def build_matrix(wb: Workbook) -> None:
     ws["G3"].number_format = "0"
     ws["G3"].border = MED
 
-    ws.merge_cells("H3:L3")
-    ws["H3"] = (
-        '=HYPERLINK("#\'Ratings\'!A1","Type 1–5 on Ratings →")'
-        '&"     Next pair: "&IFERROR(INDEX(YearPairList,MATCH($B$3,YearPairList,0)+1),"—")'
-        '&"     Previous pair: "&IFERROR(INDEX(YearPairList,MATCH($B$3,YearPairList,0)-1),"—")'
-    )
-    ws["H3"].font = font(11, color=MUTED)
+    ws.merge_cells("H3:I3")
+    ws["H3"] = '=HYPERLINK("#\'Ratings\'!A1","Type 1-5 on Ratings")'
+    ws["H3"].font = font(11, bold=True, color=TEAL, underline="single")
     ws["H3"].alignment = align("left")
+    ws.merge_cells("J3:L3")
+    ws["J3"] = (
+        '=IFERROR("Next: "&INDEX(YearPairList,MATCH($B$3,YearPairList,0)+1)&"   |   Previous: "&'
+        'INDEX(YearPairList,MATCH($B$3,YearPairList,0)-1),"")'
+    )
+    ws["J3"].font = font(10, color=MUTED)
+    ws["J3"].alignment = align("left")
 
     add_defined_name(wb, "YearPair", f"{q(SHEET_MATRIX)}!$B$3")
     add_defined_name(wb, "ViewEarlierYear", f"{q(SHEET_MATRIX)}!$E$3")
@@ -972,12 +975,6 @@ def build_matrix(wb: Workbook) -> None:
         for r in (GLANCE_SKILL_ROW, GLANCE_SUB_ROW):
             ws.cell(r, col).fill = fill(NAVY)
             ws.cell(r, col).border = THIN
-
-    ratings_end = MATRIX_DATA_END
-    emp_rng = f"{q(SHEET_RATINGS)}!$A$6:$A${ratings_end}"
-    skill_rng = f"{q(SHEET_RATINGS)}!$C$6:$C${ratings_end}"
-    year_hdr = f"{q(SHEET_RATINGS)}!$E$5:$T$5"
-    year_block = f"{q(SHEET_RATINGS)}!$E$6:$T${ratings_end}"
 
     for n in range(1, NUM_SKILL_SLOTS + 1):
         earlier_c, later_c, change_c = glance_skill_columns(n)
@@ -1046,10 +1043,8 @@ def build_matrix(wb: Workbook) -> None:
             def pull(year_name: str) -> str:
                 return (
                     f'=IF(OR($A{r}="",{skill_name_cell}="",{year_name}=""),"",'
-                    f"IFERROR(1/(1/SUMIFS("
-                    f"INDEX({year_block},0,MATCH({year_name},{year_hdr},0)),"
-                    f"{emp_rng},$A{r},{skill_rng},{skill_name_cell}"
-                    f'))),""))'
+                    f"IF(SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,{year_name})=0,\"\","
+                    f"SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,{year_name})))"
                 )
 
             earlier_cell = ws.cell(r, earlier_c, pull("ViewEarlierYear"))
@@ -1119,8 +1114,8 @@ def build_ratings(wb: Workbook) -> None:
     ws.cell(
         MATRIX_INFO_ROW,
         1,
-        '="Rating 1–5. Current calendar year: "&CalendarYear&'
-        '". Latest year with ratings: "&IF(LatestYear="","—",LatestYear)&'
+        '="Rating 1-5. Current calendar year: "&CalendarYear&'
+        '". Latest year with ratings: "&IF(LatestYear="","-",LatestYear)&'
         '". Filter the Employee column to focus on one person."',
     ).font = font(11, color=MUTED)
 
@@ -1408,13 +1403,26 @@ def build_calc(wb: Workbook) -> None:
             f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,LatestYear),"")))',
         )
 
-    # Skill-set required skills
+    # Skill-set required skills (contiguous rows with the same set name)
+    sets_a = f"{q(SHEET_SETS)}!$A$6:$A${5 + NUM_SET_SLOTS}"
+    sets_b = f"{q(SHEET_SETS)}!$B$6:$B${5 + NUM_SET_SLOTS}"
+    sets_c = f"{q(SHEET_SETS)}!$C$6:$C${5 + NUM_SET_SLOTS}"
     ws["L4"] = "SetSkill"
     ws["L5"] = "Min"
     for k in range(MAX_SET_SKILLS):
         col = 13 + k  # M onwards
-        ws.cell(4, col, f'=IFERROR(INDEX(FILTER({q(SHEET_SETS)}!$B$6:$B${5 + NUM_SET_SLOTS},{q(SHEET_SETS)}!$A$6:$A${5 + NUM_SET_SLOTS}=SkillSetFilter),{k + 1}),"")')
-        ws.cell(5, col, f'=IFERROR(INDEX(FILTER({q(SHEET_SETS)}!$C$6:$C${5 + NUM_SET_SLOTS},{q(SHEET_SETS)}!$A$6:$A${5 + NUM_SET_SLOTS}=SkillSetFilter),{k + 1}),"")')
+        ws.cell(
+            4,
+            col,
+            f'=IFERROR(IF(INDEX({sets_a},MATCH(SkillSetFilter,{sets_a},0)+{k})=SkillSetFilter,'
+            f"INDEX({sets_b},MATCH(SkillSetFilter,{sets_a},0)+{k}),\"\"),\"\")",
+        )
+        ws.cell(
+            5,
+            col,
+            f'=IFERROR(IF(INDEX({sets_a},MATCH(SkillSetFilter,{sets_a},0)+{k})=SkillSetFilter,'
+            f"INDEX({sets_c},MATCH(SkillSetFilter,{sets_a},0)+{k}),\"\"),\"\")",
+        )
 
     # Per-employee skill-set scores
     ws["L7"] = "Employee"
@@ -1424,42 +1432,47 @@ def build_calc(wb: Workbook) -> None:
     ws["P7"] = "MetMin"
     ws["Q7"] = "Rank"
     skill_cols = [get_column_letter(13 + k) for k in range(MAX_SET_SKILLS)]
+    latest_helpers = [get_column_letter(21 + k) for k in range(MAX_SET_SKILLS)]  # U-Z
+    prev_helpers = [get_column_letter(27 + k) for k in range(MAX_SET_SKILLS)]  # AA-AF
+    ws["U7"] = "Latest1"
+    ws["AA7"] = "Prev1"
     for emp_i in range(NUM_EMPLOYEE_SLOTS):
         r = 8 + emp_i
         emp_row = 6 + emp_i
         ws.cell(r, 12, f'=IF({q(SHEET_EMP)}!B{emp_row}="","",{q(SHEET_EMP)}!B{emp_row})')
-        latest_parts = []
-        prev_parts = []
-        cov_parts = []
-        min_parts = []
-        for k, col in enumerate(skill_cols):
-            latest_parts.append(
-                f'IF({col}$4="","",SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{col}$4,DataYear,LatestYear))'
+        for k, scol in enumerate(skill_cols):
+            ws.cell(
+                r,
+                21 + k,
+                f'=IF(OR(L{r}="",{scol}$4=""),"",IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,LatestYear)=0,"",'
+                f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,LatestYear)))",
             )
-            prev_parts.append(
-                f'IF(OR({col}$4="",PreviousYear=""),"",SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{col}$4,DataYear,PreviousYear))'
+            ws.cell(
+                r,
+                27 + k,
+                f'=IF(OR(L{r}="",{scol}$4="",PreviousYear=""),"",IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,PreviousYear)=0,"",'
+                f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,PreviousYear)))",
             )
-            cov_parts.append(
-                f'IF(OR({col}$4="",SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{col}$4,DataYear,LatestYear)=0),0,1)'
-            )
-            min_parts.append(
-                f'IF(OR({col}$4="",{col}$5=""),0,IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{col}$4,DataYear,LatestYear)>={col}$5,1,0))'
-            )
-        ws.cell(
-            r,
-            13,
-            f'=IF(L{r}="","",IFERROR(IF(({"+".join(cov_parts)})=0,"",'
-            f'({"+".join(latest_parts)})/({"+".join(cov_parts)})),""))',
-        )
+        ws.cell(r, 13, f'=IF(L{r}="","",IFERROR(ROUND(AVERAGE({latest_helpers[0]}{r}:{latest_helpers[-1]}{r}),2),""))')
         ws.cell(
             r,
             14,
-            f'=IF(OR(L{r}="",M{r}="",PreviousYear=""),"",IFERROR('
-            f'IF(({"+".join(cov_parts)})=0,"",({"+".join(latest_parts)})/({"+".join(cov_parts)}))'
-            f'-IFERROR(({"+".join(prev_parts)})/MAX(1,{"+".join(cov_parts)}),""),""))',
+            f'=IF(OR(L{r}="",M{r}="",PreviousYear=""),"",IFERROR(ROUND(M{r}-AVERAGE({prev_helpers[0]}{r}:{prev_helpers[-1]}{r}),2),""))',
         )
-        ws.cell(r, 15, f'=IF(L{r}="","",{"+".join(cov_parts)}&"/"&COUNTA({skill_cols[0]}$4:{skill_cols[-1]}$4))')
-        ws.cell(r, 16, f'=IF(L{r}="","",{"+".join(min_parts)}&"/"&COUNT({skill_cols[0]}$5:{skill_cols[-1]}$5))')
+        ws.cell(
+            r,
+            15,
+            f'=IF(L{r}="","",COUNT({latest_helpers[0]}{r}:{latest_helpers[-1]}{r})&"/"&COUNTA({skill_cols[0]}$4:{skill_cols[-1]}$4))',
+        )
+        met_bits = "+".join(
+            f'IF(OR({scol}$4="",{scol}$5="",{latest_helpers[k]}{r}=""),0,IF({latest_helpers[k]}{r}>={scol}$5,1,0))'
+            for k, scol in enumerate(skill_cols)
+        )
+        ws.cell(
+            r,
+            16,
+            f'=IF(L{r}="","",({met_bits})&"/"&COUNT({skill_cols[0]}$5:{skill_cols[-1]}$5))',
+        )
         ws.cell(
             r,
             17,
@@ -1512,8 +1525,8 @@ def build_dashboard(wb: Workbook) -> None:
     style_title(ws["A2"], "Dashboard — year on year")
     ws.merge_cells("A3:R3")
     ws["A3"] = (
-        '="Team view, one person, or a job profile. Latest year with ratings: "&IF(LatestYear="","—",LatestYear)'
-        '&"  ·  Previous: "&IF(PreviousYear="","—",PreviousYear)&"  ·  Calendar: "&CalendarYear'
+        '="Team view, one person, or a job profile. Latest year with ratings: "&IF(LatestYear="","-",LatestYear)'
+        '&"  |  Previous: "&IF(PreviousYear="","-",PreviousYear)&"  |  Calendar: "&CalendarYear'
     )
     ws["A3"].font = font(11, italic=True, color=MUTED)
 
@@ -1534,7 +1547,7 @@ def build_dashboard(wb: Workbook) -> None:
     ws["G5"] = "Department"
     ws["H5"] = "→"
     ws["I5"] = "(All departments)"
-    ws["K5"] = '=HYPERLINK("#\'Years\'!A1","Add / manage years →")'
+    ws["K5"] = '=HYPERLINK("#\'Years\'!A1","Add / manage years")'
     ws["K5"].font = font(11, bold=True, color=WHITE, underline="single")
     ws["K5"].fill = fill(TEAL)
     ws.merge_cells("K5:M5")
@@ -1573,29 +1586,29 @@ def build_dashboard(wb: Workbook) -> None:
 
     # ----- Org overview KPIs -----
     ws.merge_cells("A6:R6")
-    ws["A6"] = '="Team overview"&IF(DeptFilter="(All departments)",""," — "&DeptFilter)'
+    ws["A6"] = '="Team overview"&IF(DeptFilter="(All departments)",""," - "&DeptFilter)'
     ws["A6"].font = font(14, bold=True, color=NAVY)
 
     kpi_card(
         ws,
         1,
         "Latest year average",
-        '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,LatestYear),AVERAGEIFS(DataRating,DataYear,LatestYear,DataDept,DeptFilter)),2),"—")',
+        '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,LatestYear),AVERAGEIFS(DataRating,DataYear,LatestYear,DataDept,DeptFilter)),2),"-")',
         TEAL,
     )
     kpi_card(ws, 4, "Previous year average",
-             '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,PreviousYear),AVERAGEIFS(DataRating,DataYear,PreviousYear,DataDept,DeptFilter)),2),"—")',
+             '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,PreviousYear),AVERAGEIFS(DataRating,DataYear,PreviousYear,DataDept,DeptFilter)),2),"-")',
              "5B8FB9")
     kpi_card(ws, 7, "Change vs last year",
              '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,LatestYear),AVERAGEIFS(DataRating,DataYear,LatestYear,DataDept,DeptFilter))'
-             '-IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,PreviousYear),AVERAGEIFS(DataRating,DataYear,PreviousYear,DataDept,DeptFilter)),2),"—")',
+             '-IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,PreviousYear),AVERAGEIFS(DataRating,DataYear,PreviousYear,DataDept,DeptFilter)),2),"-")',
              GOLD, "+0.00;-0.00;0.00")
     kpi_card(
         ws,
         10,
         "Change vs first year",
         '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,LatestYear),AVERAGEIFS(DataRating,DataYear,LatestYear,DataDept,DeptFilter))'
-        '-IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,MINIFS(DataYear,DataRating,">=1")),AVERAGEIFS(DataRating,DataYear,MINIFS(DataYear,DataRating,">=1",DataDept,DeptFilter),DataDept,DeptFilter)),2),"—")',
+        '-IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,MINIFS(DataYear,DataRating,">=1")),AVERAGEIFS(DataRating,DataYear,MINIFS(DataYear,DataRating,">=1",DataDept,DeptFilter),DataDept,DeptFilter)),2),"-")',
         NAVY,
         "+0.00;-0.00;0.00",
     )
@@ -1697,28 +1710,28 @@ def build_dashboard(wb: Workbook) -> None:
         emp_title_row,
         1,
         '=IF(EmpFilter="","Select an employee in the filter above",'
-        'EmpFilter&" — skill overview since they joined")',
+        'EmpFilter&" - skill overview since they joined")',
     ).font = font(14, bold=True, color=NAVY)
 
     ws.merge_cells(start_row=25, start_column=1, end_row=25, end_column=18)
     ws["A25"] = (
         '=IF(EmpFilter="","",'
-        '"Department: "&IFERROR(INDEX(Employees!C6:C21,MATCH(EmpFilter,Employees!B6:B21,0)),"—")'
-        '&"   ·   Title: "&IFERROR(INDEX(Employees!D6:D21,MATCH(EmpFilter,Employees!B6:B21,0)),"—")'
-        '&"   ·   Hired: "&TEXT(IFERROR(INDEX(Employees!F6:F21,MATCH(EmpFilter,Employees!B6:B21,0)),""),"YYYY-MM-DD")'
-        '&"   ·   First ratings: "&IFERROR(MINIFS(DataYear,DataEmployee,EmpFilter,DataRating,">=1"),"—")'
-        '&"   ·   Latest: "&LatestYear)'
+        '"Department: "&IFERROR(INDEX(Employees!C6:C21,MATCH(EmpFilter,Employees!B6:B21,0)),"-")'
+        '&"   |   Title: "&IFERROR(INDEX(Employees!D6:D21,MATCH(EmpFilter,Employees!B6:B21,0)),"-")'
+        '&"   |   Hired: "&TEXT(IFERROR(INDEX(Employees!F6:F21,MATCH(EmpFilter,Employees!B6:B21,0)),""),"YYYY-MM-DD")'
+        '&"   |   First ratings: "&IFERROR(MINIFS(DataYear,DataEmployee,EmpFilter,DataRating,">=1"),"-")'
+        '&"   |   Latest: "&LatestYear)'
     )
     ws["A25"].font = font(11, color=MUTED)
 
     emp_kpis = [
-        (1, "Latest average", '=IFERROR(ROUND(AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,LatestYear),2),"—")', TEAL, "0.00"),
+        (1, "Latest average", '=IFERROR(ROUND(AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,LatestYear),2),"-")', TEAL, "0.00"),
         (4, "vs last year",
          '=IFERROR(ROUND(AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,LatestYear)'
-         '-AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,PreviousYear),2),"—")', GOLD, "+0.00;-0.00;0.00"),
+         '-AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,PreviousYear),2),"-")', GOLD, "+0.00;-0.00;0.00"),
         (7, "vs first year (since joined)",
          '=IFERROR(ROUND(AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,LatestYear)'
-         '-AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,MINIFS(DataYear,DataEmployee,EmpFilter,DataRating,">=1")),2),"—")',
+         '-AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,MINIFS(DataYear,DataEmployee,EmpFilter,DataRating,">=1")),2),"-")',
          NAVY, "+0.00;-0.00;0.00"),
         (10, "Skills below target",
          '=COUNTIFS(Calc!G5:G20,"<>",Calc!J5:J20,"<"&TargetRating)', RED, "0"),
@@ -1821,13 +1834,16 @@ def build_dashboard(wb: Workbook) -> None:
         job_row,
         1,
         '=IF(SkillSetFilter="","Select a skill set in the filter above",'
-        '"Who can do the job — "&SkillSetFilter&"  (ranked by latest-year average on the required skills)")',
+        '"Who can do the job - "&SkillSetFilter&"  (ranked by latest-year average on the required skills)")',
     ).font = font(14, bold=True, color=NAVY)
 
     ws.merge_cells(start_row=51, start_column=1, end_row=51, end_column=12)
     ws["A51"] = (
-        f'="Required skills: "&TEXTJOIN(", ",TRUE,FILTER({q(SHEET_SETS)}!B6:B{5 + NUM_SET_SLOTS},{q(SHEET_SETS)}!A6:A{5 + NUM_SET_SLOTS}=SkillSetFilter))'
-        f'&"   ·   Minimums: "&TEXTJOIN(", ",TRUE,FILTER({q(SHEET_SETS)}!C6:C{5 + NUM_SET_SLOTS},{q(SHEET_SETS)}!A6:A{5 + NUM_SET_SLOTS}=SkillSetFilter))'
+        f'="Required: "&TRIM(Calc!M4&IF(Calc!N4="","",", "&Calc!N4)&IF(Calc!O4="","",", "&Calc!O4)'
+        f'&IF(Calc!P4="","",", "&Calc!P4)&IF(Calc!Q4="","",", "&Calc!Q4)&IF(Calc!R4="","",", "&Calc!R4))'
+        f'&"   |   Minimums: "&TRIM(TEXT(Calc!M5,"0")&IF(Calc!N5="","",", "&TEXT(Calc!N5,"0"))'
+        f'&IF(Calc!O5="","",", "&TEXT(Calc!O5,"0"))&IF(Calc!P5="","",", "&TEXT(Calc!P5,"0"))'
+        f'&IF(Calc!Q5="","",", "&TEXT(Calc!Q5,"0"))&IF(Calc!R5="","",", "&TEXT(Calc!R5,"0")))'
     )
     ws["A51"].font = font(11, color=MUTED)
 
