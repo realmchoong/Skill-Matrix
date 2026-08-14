@@ -21,7 +21,7 @@ NUM_SKILL_SLOTS = 16
 NUM_EMPLOYEE_SLOTS = 16
 NUM_YEAR_SLOTS = 16
 NUM_LIST_SLOTS = 16
-NUM_SET_SLOTS = 24
+NUM_SET_SLOTS = 40
 MAX_SET_SKILLS = 6
 
 NAV_ROW = 1
@@ -104,73 +104,84 @@ PRESET_YEARS = list(range(2023, 2035))  # already waiting as columns
 # Sample data
 # ---------------------------------------------------------------------------
 EMPLOYEES = [
-    ("EMP-001", "Alex Rivera", "Engineering", "Software Engineer", "Dana Wright", date(2022, 3, 12)),
-    ("EMP-002", "Jordan Chen", "Engineering", "Senior Developer", "Dana Wright", date(2021, 6, 15)),
-    ("EMP-003", "Sam Patel", "Data", "Data Analyst", "Quinn Foster", date(2023, 1, 10)),
-    ("EMP-004", "Taylor Brooks", "Product", "Product Manager", "Quinn Foster", date(2020, 9, 1)),
-    ("EMP-005", "Morgan Lee", "Design", "UX Designer", "Quinn Foster", date(2024, 2, 20)),
-    ("EMP-006", "Casey Nguyen", "Engineering", "QA Engineer", "Dana Wright", date(2022, 11, 4)),
-    ("EMP-007", "Riley Thompson", "Operations", "Operations Lead", "Dana Wright", date(2019, 4, 8)),
-    ("EMP-008", "Avery Kim", "Data", "Data Engineer", "Quinn Foster", date(2024, 8, 18)),
+    ("EMP-001", "Alex Rivera", "Vision", "Vision Switcher", "Riley Thompson", date(2022, 3, 12)),
+    ("EMP-002", "Jordan Chen", "Vision", "Camera Switcher", "Riley Thompson", date(2021, 6, 15)),
+    ("EMP-003", "Sam Patel", "Content", "Content Operator", "Riley Thompson", date(2023, 1, 10)),
+    ("EMP-004", "Taylor Brooks", "Systems", "Systems Technician", "Riley Thompson", date(2020, 9, 1)),
+    ("EMP-005", "Morgan Lee", "Systems", "Setup Technician", "Riley Thompson", date(2024, 2, 20)),
+    ("EMP-006", "Casey Nguyen", "Streaming", "Streaming Operator", "Riley Thompson", date(2022, 11, 4)),
+    ("EMP-007", "Riley Thompson", "Vision", "Vision Supervisor", "Dana Wright", date(2019, 4, 8)),
+    ("EMP-008", "Avery Kim", "Content", "Content Operator", "Riley Thompson", date(2024, 8, 18)),
 ]
 
 SKILLS = [
-    ("SK-001", "Python", "Technical", "Writing, reading, and debugging Python code"),
-    ("SK-002", "SQL", "Technical", "Querying and transforming data in databases"),
-    ("SK-003", "Excel", "Technical", "Spreadsheets, formulas, pivot tables, and reporting"),
-    ("SK-004", "Data Analysis", "Technical", "Interpreting data to support decisions"),
-    ("SK-005", "Git", "Tools", "Version control, branching, and code review"),
-    ("SK-006", "Communication", "Soft Skills", "Clear writing, speaking, and listening"),
-    ("SK-007", "Leadership", "Soft Skills", "Guiding others and owning outcomes"),
-    ("SK-008", "Problem Solving", "Soft Skills", "Breaking down issues and finding solutions"),
-    ("SK-009", "Project Management", "Domain", "Planning, tracking, and delivering work"),
-    ("SK-010", "Stakeholder Management", "Domain", "Aligning partners and managing expectations"),
+    ("SK-001", "Barco Vision Switching", "Switching", "Operate Barco (or similar) processors and switch LED / IMAG / program during the show"),
+    ("SK-002", "Camera Switching", "Switching", "Cut cameras and direct the live picture"),
+    ("SK-003", "Content Operation", "Content", "Cue and play out show content — media servers, playback, and graphics"),
+    ("SK-004", "Systems Tech", "Systems", "Signal flow, routing, networking, and show systems"),
+    ("SK-005", "Technical Setup", "Systems", "Rig, patch, and line-check vision systems before doors"),
+    ("SK-006", "Live Streaming", "Streaming", "Encode, monitor, and deliver the live stream"),
+    ("SK-007", "Troubleshooting", "Support", "Diagnose and fix issues under show pressure"),
 ]
 
-DEPARTMENTS = ["Engineering", "Data", "Product", "Design", "Operations"]
+DEPARTMENTS = ["Vision", "Content", "Systems", "Streaming"]
 JOB_TITLES = [
-    "Software Engineer",
-    "Senior Developer",
-    "Data Analyst",
-    "Data Engineer",
-    "Product Manager",
-    "UX Designer",
-    "QA Engineer",
-    "Operations Lead",
+    "Vision Switcher",
+    "Camera Switcher",
+    "Content Operator",
+    "Systems Technician",
+    "Setup Technician",
+    "Streaming Operator",
+    "Vision Supervisor",
 ]
 
-# 2025, 2026 ratings from the original matrix
+# (2025, 2026) for: Barco, Camera, Content, Systems, Setup, Streaming, Troubleshooting
 BASE_2526 = [
-    [(3, 4), (3, 3), (2, 3), (2, 3), (4, 4), (3, 4), (2, 2), (4, 4), (2, 2), (2, 3)],
-    [(5, 5), (4, 4), (3, 3), (3, 4), (5, 5), (4, 4), (3, 4), (5, 5), (3, 3), (3, 3)],
-    [(2, 3), (5, 5), (5, 5), (4, 5), (2, 3), (4, 4), (2, 3), (4, 4), (3, 3), (3, 4)],
-    [(1, 2), (2, 2), (4, 4), (3, 3), (1, 2), (5, 5), (4, 5), (4, 4), (5, 5), (5, 5)],
-    [(1, 1), (1, 2), (3, 4), (2, 3), (2, 2), (5, 5), (3, 3), (4, 5), (3, 3), (4, 4)],
-    [(2, 3), (3, 3), (4, 4), (3, 3), (4, 4), (3, 4), (2, 2), (4, 5), (2, 3), (2, 3)],
-    [(1, 1), (2, 2), (5, 5), (3, 3), (1, 1), (4, 4), (4, 4), (4, 4), (4, 5), (4, 4)],
-    [(4, 5), (5, 5), (3, 3), (5, 5), (4, 5), (3, 3), (2, 3), (4, 4), (2, 3), (2, 3)],
+    [(4, 5), (3, 3), (2, 3), (3, 3), (3, 4), (2, 2), (3, 4)],
+    [(3, 3), (5, 5), (2, 3), (2, 3), (3, 3), (2, 2), (4, 4)],
+    [(2, 2), (2, 3), (4, 5), (2, 3), (3, 3), (4, 4), (3, 3)],
+    [(2, 3), (2, 2), (3, 3), (5, 5), (4, 5), (3, 3), (4, 5)],
+    [(1, 2), (1, 2), (2, 3), (3, 4), (4, 5), (2, 2), (3, 4)],
+    [(1, 2), (2, 2), (3, 4), (3, 3), (3, 3), (4, 5), (3, 4)],
+    [(4, 4), (4, 4), (3, 4), (4, 4), (4, 4), (3, 3), (5, 5)],
+    [(1, 2), (2, 2), (4, 5), (2, 3), (2, 3), (3, 4), (3, 3)],
 ]
 
 SKILL_SETS = [
     (
-        "Software Engineer",
-        "Builds and ships product code",
-        [("Python", 4), ("Git", 4), ("Problem Solving", 4), ("Communication", 3)],
+        "Barco Vision Switching",
+        "Lead Barco / LED / program switching on a live event",
+        [("Barco Vision Switching", 4), ("Technical Setup", 3), ("Troubleshooting", 3)],
     ),
     (
-        "Data Analyst",
-        "Turns data into decisions",
-        [("SQL", 4), ("Excel", 4), ("Data Analysis", 4), ("Communication", 3)],
+        "Camera Switching",
+        "Cut cameras and own the live picture",
+        [("Camera Switching", 4), ("Technical Setup", 3), ("Troubleshooting", 3)],
     ),
     (
-        "Product Manager",
-        "Owns outcomes with stakeholders",
-        [("Project Management", 4), ("Stakeholder Management", 4), ("Communication", 4), ("Leadership", 3)],
+        "Content Operation",
+        "Cue and play out show content",
+        [("Content Operation", 4), ("Live Streaming", 3), ("Troubleshooting", 3)],
     ),
     (
-        "Team Lead",
-        "Guides people and delivery",
-        [("Leadership", 4), ("Communication", 4), ("Project Management", 3), ("Problem Solving", 4)],
+        "Systems Tech",
+        "Own signal flow, routing, and show systems",
+        [("Systems Tech", 4), ("Technical Setup", 4), ("Troubleshooting", 4)],
+    ),
+    (
+        "Technical Setup",
+        "Rig, patch, and line-check before doors",
+        [("Technical Setup", 4), ("Systems Tech", 3), ("Troubleshooting", 3)],
+    ),
+    (
+        "Live Streaming",
+        "Encode, monitor, and deliver the live stream",
+        [("Live Streaming", 4), ("Content Operation", 3), ("Troubleshooting", 3)],
+    ),
+    (
+        "Troubleshooting",
+        "Diagnose and fix issues under show pressure",
+        [("Troubleshooting", 4), ("Systems Tech", 3), ("Technical Setup", 3)],
     ),
 ]
 
@@ -749,7 +760,7 @@ def build_skills(wb: Workbook) -> None:
         height=70,
     )
 
-    cat_dv = DataValidation(type="list", formula1='"Technical,Tools,Soft Skills,Domain"', allow_blank=True)
+    cat_dv = DataValidation(type="list", formula1='"Switching,Content,Systems,Streaming,Support"', allow_blank=True)
     cat_dv.prompt = "Optional grouping"
     cat_dv.promptTitle = "Category"
     ws.add_data_validation(cat_dv)
@@ -763,7 +774,7 @@ def build_skills(wb: Workbook) -> None:
     )
 
     ws.column_dimensions["A"].width = 12
-    ws.column_dimensions["B"].width = 28
+    ws.column_dimensions["B"].width = 32
     ws.column_dimensions["C"].width = 16
     ws.column_dimensions["D"].width = 62
     ws.freeze_panes = "A6"
@@ -843,20 +854,21 @@ def build_skill_sets(wb: Workbook) -> None:
     for i, (name, desc, _skills) in enumerate(SKILL_SETS):
         ws.cell(6 + i, 5, name).border = THIN
         ws.cell(6 + i, 6, desc).border = THIN
-    for i in range(len(SKILL_SETS), 8):
+    name_slots = 16
+    for i in range(len(SKILL_SETS), name_slots):
         ws.cell(6 + i, 5, "").fill = fill(YELLOW)
         ws.cell(6 + i, 6, "").fill = fill(YELLOW)
         ws.cell(6 + i, 5).border = THIN
         ws.cell(6 + i, 6).border = THIN
-    add_table(ws, "tblSkillSetNames", "E5:F13")
+    add_table(ws, "tblSkillSetNames", f"E5:F{5 + name_slots}")
     add_defined_name(
         wb,
         "SkillSetList",
-        f"{q(SHEET_SETS)}!$E$6:INDEX({q(SHEET_SETS)}!$E$6:$E$13,COUNTA({q(SHEET_SETS)}!$E$6:$E$13))",
+        f"{q(SHEET_SETS)}!$E$6:INDEX({q(SHEET_SETS)}!$E$6:$E${5 + name_slots},COUNTA({q(SHEET_SETS)}!$E$6:$E${5 + name_slots}))",
     )
 
-    ws.column_dimensions["A"].width = 22
-    ws.column_dimensions["B"].width = 26
+    ws.column_dimensions["A"].width = 26
+    ws.column_dimensions["B"].width = 28
     ws.column_dimensions["C"].width = 18
     ws.column_dimensions["D"].width = 4
     ws.column_dimensions["E"].width = 22
@@ -1021,7 +1033,7 @@ def build_matrix(wb: Workbook) -> None:
 
     ws.column_dimensions["A"].width = 20
     ws.column_dimensions["B"].width = 14
-    ws.column_dimensions["C"].width = 22
+    ws.column_dimensions["C"].width = 26
     ws.column_dimensions["D"].width = 14
     for i in range(5):
         ws.column_dimensions[get_column_letter(SUMMARY_FIRST_COL + i)].width = 13
@@ -1574,8 +1586,8 @@ def build_dashboard(wb: Workbook) -> None:
 
     ws.merge_cells(start_row=51, start_column=1, end_row=51, end_column=12)
     ws["A51"] = (
-        '="Required skills: "&TEXTJOIN(", ",TRUE,FILTER(SkillSets!B6:B29,SkillSets!A6:A29=SkillSetFilter))'
-        '&"   ·   Minimums: "&TEXTJOIN(", ",TRUE,FILTER(SkillSets!C6:C29,SkillSets!A6:A29=SkillSetFilter))'
+        f'="Required skills: "&TEXTJOIN(", ",TRUE,FILTER({q(SHEET_SETS)}!B6:B{5 + NUM_SET_SLOTS},{q(SHEET_SETS)}!A6:A{5 + NUM_SET_SLOTS}=SkillSetFilter))'
+        f'&"   ·   Minimums: "&TEXTJOIN(", ",TRUE,FILTER({q(SHEET_SETS)}!C6:C{5 + NUM_SET_SLOTS},{q(SHEET_SETS)}!A6:A{5 + NUM_SET_SLOTS}=SkillSetFilter))'
     )
     ws["A51"].font = font(11, color=MUTED)
 
@@ -1702,8 +1714,9 @@ def build_how_to(wb: Workbook) -> None:
     style_title(ws["A2"], "How to use this skill matrix")
     ws.merge_cells("A3:L3")
     ws["A3"] = (
-        "Rate skills from 1 to 5, keep every year you have rated, and use the Dashboard to look at the whole team, "
-        "one person over time, or who is strongest for a job. Sample data is included — replace it with your team."
+        "Rate skills from 1 to 5 for a live-event vision crew, keep every year you have rated, "
+        "and use the Dashboard to look at the whole team, one operator over time, or who is strongest for a seat. "
+        "Sample data is included — replace it with your crew."
     )
     ws["A3"].font = font(12, color=MUTED)
     ws["A3"].alignment = align("left", wrap=True)
@@ -1741,8 +1754,10 @@ def build_how_to(wb: Workbook) -> None:
         ws, 16, 7, 24, 12,
         "4. Dashboard filters",
         "Employee — that person’s skills, last year vs latest, and since they joined (first recorded rating).\n\n"
-        "Skill set — ranks who currently looks strongest for that job. Edit sets on the Skill Sets sheet (same set name, one skill per row, optional minimum).\n\n"
-        "Department — limits the team charts to one group, or All departments.\n\n"
+        "Skill set — ranks who currently looks strongest for that seat "
+        "(Barco Vision Switching, Camera Switching, Content Operation, Systems Tech, "
+        "Technical Setup, Live Streaming, or Troubleshooting).\n\n"
+        "Department — Vision, Content, Systems, Streaming, or All departments.\n\n"
         "Line charts show year on year on year, not just two years.",
         GOLD,
     )

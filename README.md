@@ -1,8 +1,24 @@
 # Employee Skill Matrix
 
-An Excel workbook for rating employee skills from **1 (beginner) to 5 (expert)** across **multiple years**, with a dashboard that can focus on one person or rank who is strongest for a job.
+An Excel workbook for a **live-event vision operating team**. Rate people from **1 (beginner) to 5 (expert)** across **multiple years**, then use the dashboard to look at one operator or to see who is strongest for a seat.
 
-Open **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)** in Microsoft 365 / Excel 2021 or later. Sample people and scores (2023–2026) are included — replace them with your team.
+Open **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)** in Microsoft 365 / Excel 2021 or later. Sample people and scores (2023–2026) are included — replace them with your crew.
+
+## Vision skill sets
+
+These are both the skills you rate and the job profiles on the Dashboard:
+
+| Skill set | What it covers |
+| --- | --- |
+| **Barco Vision Switching** | Barco / LED / program switching |
+| **Camera Switching** | Cutting cameras and the live picture |
+| **Content Operation** | Media servers, playback, graphics |
+| **Systems Tech** | Signal flow, routing, show systems |
+| **Technical Setup** | Rig, patch, and line-check before doors |
+| **Live Streaming** | Encode, monitor, and deliver the stream |
+| **Troubleshooting** | Fixing issues under show pressure |
+
+Each profile also expects **Technical Setup** and/or **Troubleshooting** at a minimum, so the ranking is “who can actually do that seat,” not only the one headline skill.
 
 ## Sheets
 
