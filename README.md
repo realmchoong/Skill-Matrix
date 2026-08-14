@@ -1,55 +1,57 @@
 # Employee Skill Matrix
 
-An Excel workbook for rating employee skills from **1 (beginner) to 5 (expert)**, adding new skills over time, and comparing **last year’s ratings with this year’s**.
+An Excel workbook for rating employee skills from **1 (beginner) to 5 (expert)** across **multiple years**, with a dashboard that can focus on one person or rank who is strongest for a job.
 
-Open **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)** in Excel (or Google Sheets). Sample people and scores are included so you can see the layout — replace them with your team.
+Open **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)** in Microsoft 365 / Excel 2021 or later. Sample people and scores (2023–2026) are included — replace them with your team.
 
 ## Sheets
 
 | Sheet | What it is for |
 | --- | --- |
-| **How to Use** | Short walkthrough and the 1–5 scale |
-| **Skill Matrix** | Where you enter ratings. Each skill has Last year, This year, and Change |
-| **Dashboard** | Team, skill, and employee averages, plus who improved or declined |
-| **Employees** | Names and roles. Add a row here to add a person to the matrix |
-| **Skills** | Skill catalog. Add a row here to add a skill to the matrix |
-| **Settings** | This year, last year, and the target rating (default 3) |
+| **How to Use** | Walkthrough and the 1–5 scale |
+| **Skill Matrix** | Ratings: one row per person per skill, one column per year |
+| **Dashboard** | Filters, year-on-year charts, employee history, who can do a job |
+| **Employees** | People. Department and job title are dropdowns. Hire date drives “since they joined” |
+| **Skills** | Skill catalog. Add a row to add a skill |
+| **Years** | Year list. Current calendar year is detected; extra years go in a yellow row |
+| **Lists** | Departments and job titles used by the dropdowns — add items here |
+| **Skill Sets** | Job profiles (a named mix of skills) for the “who can do the job” ranking |
+| **Settings** | Target rating (default 3) |
 
 ## Rate a skill
 
 1. Open **Skill Matrix**.
-2. Find the person (rows) and skill (column group).
-3. Enter a whole number **1–5** in Last year and/or This year.
-4. **Change** fills in on its own (this year minus last year).
+2. Find the person and skill (use the Employee filter on the header if you want one person at a time).
+3. Enter **1–5** in the column for that year. The current calendar year is highlighted.
+4. **First**, **Latest**, **vs last year**, and **Since joined** fill in on their own.
 
-Cells color themselves: 1 red → 5 green. Green change means improved; red means declined.
+## Add a new year (automatic each year)
 
-## Add a skill later
+Years **2023–2034** are already columns. When a new year starts, rate that column — you do not copy last year’s scores. Charts pick up a year as soon as it has ratings.
 
-1. Open **Skills**.
-2. In the next yellow row, type a **Skill Name** (category and description are optional).
-3. Return to **Skill Matrix** — the next empty column group shows that skill.
-4. Enter last-year and this-year ratings for each person.
+On **Years** (or **Add / manage years** on the Dashboard):
 
-Sixteen skill slots are already set up. Unused slots stay blank until you name them.
+- If this calendar year is already in the list, a button takes you to the Skill Matrix to rate it.
+- If it is missing, the button jumps to the next yellow **Year** row so you can type it (for example **2035**). Keep years in order, oldest at the top.
 
-## Add an employee later
+## Add a skill, person, department, or job title
 
-1. Open **Employees**.
-2. In the next yellow row, keep the Employee ID and fill in **Full Name** and **Department**.
-3. The Skill Matrix adds a row. Rate each skill.
+| Add | Where | Then |
+| --- | --- | --- |
+| Skill | Next yellow row on **Skills** | Rate it on the Skill Matrix |
+| Person | Next yellow row on **Employees** | Pick department and title from the dropdowns; add a hire date |
+| Department or job title | Next yellow row on **Lists** | It appears in the Employees dropdowns. Add it on Lists first |
+| Skill set (job profile) | **Skill Sets** — same set name, one skill per row, optional minimum 1–5 | Pick it on the Dashboard to rank people |
 
-## Compare last year with this year
+## Dashboard filters
 
-- On **Skill Matrix**, read the **Change** column beside each skill.
-- On **Dashboard**, see team average, each skill’s average, each person’s average, skills below the target, and how many 1s–5s you gave.
-- On **Settings**, change **This year** / **Last year** (the column headers follow) and **Target rating** (scores below this are flagged).
+Yellow cells at the top:
 
-### Starting a new review year
+- **Employee** — that person’s skills, last year vs latest, and change since they joined (first recorded rating after hire).
+- **Skill set** — who currently looks strongest for that job (latest-year average on the required skills, vs last year, and how many skills meet the minimum).
+- **Department** — limits the team year-on-year chart and skill table, or leave **(All departments)**.
 
-1. Copy every This Year rating and paste **values** into Last Year.
-2. Clear This Year and enter the new scores.
-3. Update the years on **Settings**.
+Line charts show **year on year on year**, not only two years. Years with no ratings stay off the chart until you enter scores.
 
 ## Rating scale
 
@@ -63,7 +65,7 @@ Sixteen skill slots are already set up. Unused slots stay blank until you name t
 
 ## Rebuild the file
 
-If you change the generator and want a fresh workbook (this replaces sample data):
+This replaces sample data:
 
 ```bash
 pip install -r requirements.txt
