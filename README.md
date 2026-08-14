@@ -1,12 +1,10 @@
 # Employee Skill Matrix
 
-An Excel workbook for a **live-event vision operating team**. Rate people from **1 (beginner) to 5 (expert)** across **multiple years**, then compare any two years (including year 1 vs year 5) and see who is strongest for a skillset.
+An Excel workbook for a **live-event vision operating team**. Rate people from **1 (beginner) to 5 (expert)**. **Skill Matrix** is this year’s crew grid. **Dashboard** is where you compare any two years (including year 1 vs year 5).
 
-Open **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)** in Microsoft 365 / Excel 2021 or later. Sample people and scores (2023–2026) are included — replace them with your crew. There are **no macros**.
+Open **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)** in Microsoft 365 / Excel 2021 or later. Sample people and scores (2023–2026) are included. There are **no macros**.
 
 ## Skillsets
-
-These are both the skillsets you rate and the Dashboard ranking list:
 
 | Skillset | Category |
 | --- | --- |
@@ -32,41 +30,40 @@ Vision, Sound, Lighting, Staging. Add another on **Lists**, then pick it on **Em
 | Sheet | What it is for |
 | --- | --- |
 | **How to Use** | Walkthrough and the 1–5 scale |
-| **Skill Matrix** | Whole-crew glance: pick **From year** and **To year** (any two years) |
-| **Ratings** | Type 1–5 for any year (source of truth) |
-| **Dashboard** | Filters, year-on-year charts, employee history, who can do a skillset |
+| **Skill Matrix** | Whole crew, **one year** (defaults to this calendar year) |
+| **Ratings** | Type 1–5 for any year |
+| **Dashboard** | Compare From year vs To year: team, one person, who is strongest |
 | **Employees** | People. Add a person in the next yellow row |
 | **Skills** | Skillset catalog. Add a skillset in the next yellow row |
-| **Years** | Year list. Current calendar year is detected; extra years go in a yellow row |
-| **Lists** | Departments used by the Employees dropdown |
-| **Skill Sets** | Skillset names for Dashboard ranking. Add a name in the yellow column |
+| **Years** | Year list. Extra years go in a yellow row |
+| **Lists** | Departments |
+| **Skill Sets** | Skillset names for Dashboard ranking |
 | **Settings** | Target rating (default 3) |
 
 ## Rate a skillset
 
-1. Open **Ratings** and type **1–5** in the column for that year (every person × skillset).
-2. Open **Skill Matrix** to see the **whole crew at once**. Each skillset shows two years and the change.
-3. At the top, pick **From year** and **To year** (for example `2023` and `2026`). Every employee’s columns update together.
+1. Open **Ratings** and type **1–5** in the column for that year.
+2. Open **Skill Matrix** to see the crew for the year shown (usually this calendar year).
+3. Open **Dashboard**, pick **From year** and **To year**, and read the change.
 
 ## Add a person or a skillset
 
 | Add | Where | Then |
 | --- | --- | --- |
 | Person | Next yellow row on **Employees** | Pick department; add a hire date |
-| Skillset (to rate) | Next yellow row on **Skills** | Rate it on Ratings / Skill Matrix |
-| Skillset (Dashboard ranking) | Yellow **Skill set name** on **Skill Sets**, plus a matching row (same name + skill) | Pick it on the Dashboard |
+| Skillset (to rate) | Next yellow row on **Skills** | Rate it on Ratings |
+| Skillset (Dashboard ranking) | Yellow **Skill set name** on **Skill Sets**, plus a matching row | Pick it on the Dashboard |
 | Department | Next yellow row on **Lists** | It appears in the Employees dropdown |
 | Year | Next yellow row on **Years** (2023–2034 already exist) | Rate that column on Ratings |
 
-## Dashboard filters
+## Dashboard
 
 Yellow cells at the top:
 
-- **Employee** — that person’s skillsets, last year vs latest, and change since they joined.
-- **Skillset** — who currently looks strongest for that job.
-- **Department** — limits the team year-on-year chart, or leave **(All departments)**.
-
-Line charts show **year on year**, not only two years.
+- **From year / To year** — any two years (sample: 2023 vs 2026).
+- **Department** — limits the team comparison, or **(All departments)**.
+- **Employee** — that person’s From vs To scores, plus a line of their average by year.
+- **Skillset** — who is strongest in the To year, with change vs From.
 
 ## Rating scale
 
@@ -79,8 +76,6 @@ Line charts show **year on year**, not only two years.
 | 5 | Expert | Go-to specialist; sets the standard |
 
 ## Rebuild the file
-
-This replaces sample data:
 
 ```bash
 pip install -r requirements.txt

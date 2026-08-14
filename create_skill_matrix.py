@@ -60,11 +60,10 @@ NAV_SHEETS = [
     SHEET_SETTINGS,
 ]
 
-GLANCE_PAIR_ROW = 3
+GLANCE_YEAR_ROW = 3
 GLANCE_CAT_ROW = 4
 GLANCE_SKILL_ROW = 5
-GLANCE_SUB_ROW = 6
-GLANCE_START = 7
+GLANCE_START = 6
 GLANCE_END = GLANCE_START + NUM_EMPLOYEE_SLOTS - 1
 
 # ---------------------------------------------------------------------------
@@ -180,10 +179,9 @@ def q(sheet: str) -> str:
     return f"'{sheet}'"
 
 
-def glance_skill_columns(n: int) -> tuple[int, int, int]:
-    """1-based (earlier, later, change) columns for skill slot n (1-based)."""
-    start = 3 + (n - 1) * 3
-    return start, start + 1, start + 2
+def glance_skill_col(n: int) -> int:
+    """1-based column for skill slot n (1-based). Employee and Department occupy A:B."""
+    return 2 + n
 
 
 def year_col(slot: int) -> int:
@@ -490,8 +488,8 @@ def build_years(wb: Workbook) -> None:
     ws["A3"] = (
         '=IF(COUNTIF($B$8:$B$23,YEAR(TODAY()))>0,'
         '"Calendar year "&YEAR(TODAY())&" is already a column on Ratings. '
-        'Open Ratings and enter this year\'s 1-5 scores. Then on Skill Matrix pick From year and To year '
-        '(any two years, for example 2023 and "&YEAR(TODAY())&") to glance at the whole crew. '
+        'Open Ratings and enter this year\'s 1-5 scores. Skill Matrix shows that year. '
+        'Compare years on the Dashboard (for example 2023 and "&YEAR(TODAY())&"). '
         'Next years through 2034 are already waiting.",'
         '"New calendar year "&YEAR(TODAY())&" is not in the list yet. Type "&YEAR(TODAY())'
         '&" in the next yellow row in the Year column, then rate people on the Skill Matrix.")'
@@ -517,7 +515,8 @@ def build_years(wb: Workbook) -> None:
     ws["A5"] = (
         "To add a year beyond 2034 (or a missing historical year): type it in the next yellow row, "
         "in order, oldest to newest. A new column appears on Ratings, and the year is available "
-        "in the From / To dropdowns on Skill Matrix. Do not use a formula for a year that already has ratings."
+        "on Skill Matrix and in the Dashboard From / To dropdowns. "
+        "Do not use a formula for a year that already has ratings."
     )
     ws["A5"].font = font(10, italic=True, color=MUTED)
     ws["A5"].alignment = align("left", wrap=True)
@@ -829,121 +828,79 @@ def build_skill_sets(wb: Workbook) -> None:
 
 
 # ===========================================================================
-# Skill Matrix (two-year glance of the whole crew)
+# Skill Matrix (current year only)
 # ===========================================================================
 def build_matrix(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_MATRIX, 0)
-    last_col = 2 + NUM_SKILL_SLOTS * 3
+    last_col = 2 + NUM_SKILL_SLOTS
     add_navigation(ws, SHEET_MATRIX, last_col)
 
-    ws.merge_cells(start_row=TITLE_ROW, start_column=1, end_row=TITLE_ROW, end_column=8)
+    ws.merge_cells(start_row=TITLE_ROW, start_column=1, end_row=TITLE_ROW, end_column=6)
     style_title(ws["A2"], "Crew skill matrix")
-    ws.merge_cells(start_row=TITLE_ROW, start_column=9, end_row=TITLE_ROW, end_column=last_col)
+    ws.merge_cells(start_row=TITLE_ROW, start_column=7, end_row=TITLE_ROW, end_column=last_col)
     ws.cell(
         TITLE_ROW,
-        9,
-        "Every person in one view. Pick any two years (for example 2023 and 2026). "
-        "Type ratings on the Ratings sheet. No macros.",
+        7,
+        "This year's scores only. Compare years on the Dashboard.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
 
-    # From / To years (any two years — works without VBA)
-    ws["A3"] = "From year"
+    ws["A3"] = "Year"
     ws["A3"].font = font(11, bold=True, color=WHITE)
-    ws["A3"].fill = fill("5B8FB9")
+    ws["A3"].fill = fill(TEAL)
     ws["A3"].alignment = align("center")
-    from_year = ws["B3"]
-    from_year.value = 2023
-    style_input(from_year)
-    from_year.font = font(16, bold=True, color=NAVY)
-    from_year.number_format = "0"
+    year_cell = ws["B3"]
+    year_cell.value = "=CalendarYear"
+    style_input(year_cell)
+    year_cell.font = font(16, bold=True, color=NAVY)
+    year_cell.number_format = "0"
 
-    ws["C3"] = "To year"
-    ws["C3"].font = font(11, bold=True, color=WHITE)
-    ws["C3"].fill = fill(TEAL)
-    ws["C3"].alignment = align("center")
-    to_year = ws["D3"]
-    to_year.value = 2026
-    style_input(to_year)
-    to_year.font = font(16, bold=True, color=NAVY)
-    to_year.number_format = "0"
+    ws.merge_cells("C3:E3")
+    ws["C3"] = '=HYPERLINK("#\'Ratings\'!A1","Type 1-5 on Ratings")'
+    ws["C3"].font = font(11, bold=True, color=TEAL, underline="single")
+    ws["C3"].alignment = align("left")
+    ws.merge_cells("F3:J3")
+    ws["F3"] = "Shows one year (defaults to this calendar year). Year-to-year comparison is on Dashboard."
+    ws["F3"].font = font(10, color=MUTED)
+    ws["F3"].alignment = align("left")
 
-    ws.merge_cells("E3:I3")
-    ws["E3"] = '=HYPERLINK("#\'Ratings\'!A1","Type 1-5 on Ratings")'
-    ws["E3"].font = font(11, bold=True, color=TEAL, underline="single")
-    ws["E3"].alignment = align("left")
-    ws.merge_cells("J3:N3")
-    ws["J3"] = "Pick any two years, including year 1 vs year 5. Both dropdowns use the Years list."
-    ws["J3"].font = font(10, color=MUTED)
-    ws["J3"].alignment = align("left")
+    add_defined_name(wb, "ViewYear", f"{q(SHEET_MATRIX)}!$B$3")
 
-    add_defined_name(wb, "ViewEarlierYear", f"{q(SHEET_MATRIX)}!$B$3")
-    add_defined_name(wb, "ViewLaterYear", f"{q(SHEET_MATRIX)}!$D$3")
-
-    # Employee / department headers
-    ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=1, end_row=GLANCE_SUB_ROW, end_column=1)
-    ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=2, end_row=GLANCE_SUB_ROW, end_column=2)
+    ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=1, end_row=GLANCE_SKILL_ROW, end_column=1)
+    ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=2, end_row=GLANCE_SKILL_ROW, end_column=2)
     for col, label in ((1, "Employee"), (2, "Department")):
         cell = ws.cell(GLANCE_CAT_ROW, col, label)
         cell.font = font(12, bold=True, color=WHITE)
         cell.fill = fill(NAVY)
         cell.alignment = align("center", wrap=True)
         cell.border = THIN
-        for r in (GLANCE_SKILL_ROW, GLANCE_SUB_ROW):
-            ws.cell(r, col).fill = fill(NAVY)
-            ws.cell(r, col).border = THIN
+        ws.cell(GLANCE_SKILL_ROW, col).fill = fill(NAVY)
+        ws.cell(GLANCE_SKILL_ROW, col).border = THIN
 
     for n in range(1, NUM_SKILL_SLOTS + 1):
-        earlier_c, later_c, change_c = glance_skill_columns(n)
+        col = glance_skill_col(n)
         skills_row = 5 + n
-        ws.merge_cells(
-            start_row=GLANCE_CAT_ROW, start_column=earlier_c, end_row=GLANCE_CAT_ROW, end_column=change_c
-        )
         cat = ws.cell(
             GLANCE_CAT_ROW,
-            earlier_c,
+            col,
             f'=IF({q(SHEET_SKILLS)}!B{skills_row}="","",{q(SHEET_SKILLS)}!C{skills_row})',
         )
         cat.font = font(9, bold=True, color=WHITE)
         cat.fill = fill(TEAL)
         cat.alignment = align("center")
         cat.border = THIN
-        for col in range(earlier_c, change_c + 1):
-            ws.cell(GLANCE_CAT_ROW, col).fill = fill(TEAL)
-            ws.cell(GLANCE_CAT_ROW, col).border = THIN
 
-        ws.merge_cells(
-            start_row=GLANCE_SKILL_ROW, start_column=earlier_c, end_row=GLANCE_SKILL_ROW, end_column=change_c
-        )
+        skill_name_cell = f"{get_column_letter(col)}${GLANCE_SKILL_ROW}"
         name = ws.cell(
             GLANCE_SKILL_ROW,
-            earlier_c,
+            col,
             f'=IF({q(SHEET_SKILLS)}!B{skills_row}="","",{q(SHEET_SKILLS)}!B{skills_row})',
         )
-        name.font = font(11, bold=True, color=NAVY)
+        name.font = font(10, bold=True, color=NAVY)
         name.fill = fill(PAPER)
         name.alignment = align("center", wrap=True)
         name.border = THIN
-        for col in range(earlier_c, change_c + 1):
-            ws.cell(GLANCE_SKILL_ROW, col).fill = fill(PAPER)
-            ws.cell(GLANCE_SKILL_ROW, col).border = THIN
-
-        skill_name_cell = f"{get_column_letter(earlier_c)}${GLANCE_SKILL_ROW}"
-        ly_h = ws.cell(GLANCE_SUB_ROW, earlier_c, "=ViewEarlierYear")
-        ty_h = ws.cell(GLANCE_SUB_ROW, later_c, "=ViewLaterYear")
-        ch_h = ws.cell(GLANCE_SUB_ROW, change_c, "Change")
-        ly_h.fill = fill("5B8FB9")
-        ty_h.fill = fill(TEAL)
-        ch_h.fill = fill("8A8178")
-        for cell in (ly_h, ty_h, ch_h):
-            cell.font = font(10, bold=True, color=WHITE)
-            cell.alignment = align("center")
-            cell.border = THIN
-            cell.number_format = "0"
-
-        ws.column_dimensions[get_column_letter(earlier_c)].width = 11
-        ws.column_dimensions[get_column_letter(later_c)].width = 11
-        ws.column_dimensions[get_column_letter(change_c)].width = 10
+        ws.column_dimensions[get_column_letter(col)].width = 16
 
         for i in range(NUM_EMPLOYEE_SLOTS):
             r = GLANCE_START + i
@@ -957,54 +914,35 @@ def build_matrix(wb: Workbook) -> None:
                 ws.cell(r, 2).border = THIN
                 ws.row_dimensions[r].height = 22
 
-            def pull(year_name: str) -> str:
-                return (
-                    f'=IF(OR($A{r}="",{skill_name_cell}="",{year_name}=""),"",'
-                    f"IF(SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,{year_name})=0,\"\","
-                    f"SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,{year_name})))"
-                )
-
-            earlier_cell = ws.cell(r, earlier_c, pull("ViewEarlierYear"))
-            later_cell = ws.cell(r, later_c, pull("ViewLaterYear"))
-            change_cell = ws.cell(
+            cell = ws.cell(
                 r,
-                change_c,
-                f'=IF(OR({get_column_letter(earlier_c)}{r}="",{get_column_letter(later_c)}{r}=""),"",'
-                f"{get_column_letter(later_c)}{r}-{get_column_letter(earlier_c)}{r})",
+                col,
+                f'=IF(OR($A{r}="",{skill_name_cell}="",ViewYear=""),"",'
+                f"IF(SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,ViewYear)=0,\"\","
+                f"SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,ViewYear)))",
             )
-            earlier_cell.fill = fill(LY_FILL)
-            later_cell.fill = fill(TY_FILL)
-            change_cell.fill = fill(CHANGE_FILL)
-            for cell in (earlier_cell, later_cell, change_cell):
-                cell.alignment = align("center")
-                cell.border = THIN
-                cell.font = font(12, bold=True)
-            change_cell.font = font(11)
-            change_cell.number_format = "+0;-0;0"
+            cell.fill = fill(TY_FILL)
+            cell.alignment = align("center")
+            cell.border = THIN
+            cell.font = font(12, bold=True)
 
-    for n in range(1, NUM_SKILL_SLOTS + 1):
-        earlier_c, later_c, change_c = glance_skill_columns(n)
-        apply_rating_cf(
-            ws,
-            f"{get_column_letter(earlier_c)}{GLANCE_START}:{get_column_letter(later_c)}{GLANCE_END}",
-        )
-        apply_change_cf(
-            ws,
-            f"{get_column_letter(change_c)}{GLANCE_START}:{get_column_letter(change_c)}{GLANCE_END}",
-        )
+    apply_rating_cf(
+        ws,
+        f"{get_column_letter(glance_skill_col(1))}{GLANCE_START}:"
+        f"{get_column_letter(glance_skill_col(NUM_SKILL_SLOTS))}{GLANCE_END}",
+    )
 
     ws.column_dimensions["A"].width = 20
-    ws.column_dimensions["B"].width = 16
+    ws.column_dimensions["B"].width = 14
     ws.row_dimensions[GLANCE_CAT_ROW].height = 18
-    ws.row_dimensions[GLANCE_SKILL_ROW].height = 32
-    ws.row_dimensions[GLANCE_SUB_ROW].height = 20
-    ws.row_dimensions[GLANCE_PAIR_ROW].height = 28
+    ws.row_dimensions[GLANCE_SKILL_ROW].height = 36
+    ws.row_dimensions[GLANCE_YEAR_ROW].height = 28
     ws.freeze_panes = f"C{GLANCE_START}"
     ws.sheet_view.showGridLines = False
-    ws.sheet_view.zoomScale = 90
+    ws.sheet_view.zoomScale = 100
     ws.sheet_properties.tabColor = NAVY
     apply_print(ws, landscape=True)
-    ws.print_title_rows = "1:6"
+    ws.print_title_rows = "1:5"
     ws.print_title_cols = "A:B"
 
 
@@ -1022,8 +960,8 @@ def build_ratings(wb: Workbook) -> None:
     ws.cell(
         TITLE_ROW,
         9,
-        "Type 1-5 here for any year. Skill Matrix is the two-year glance of the whole crew. "
-        "Pick From year and To year there to compare any two years at once — no macros.",
+        "Type 1-5 here for any year. Skill Matrix shows one year (the crew grid). "
+        "Compare two years on the Dashboard.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
 
@@ -1235,17 +1173,23 @@ def build_calc(wb: Workbook) -> None:
     ws["B2"] = '=IFERROR(MAXIFS(DataYear,DataRating,">=1",DataYear,"<"&B1),"")'
     add_defined_name(wb, "LatestYear", f"{q(SHEET_CALC)}!$B$1")
     add_defined_name(wb, "PreviousYear", f"{q(SHEET_CALC)}!$B$2")
-    add_defined_name(wb, "EmpFilter", f"{q(SHEET_DASH)}!$C$5")
-    add_defined_name(wb, "SkillSetFilter", f"{q(SHEET_DASH)}!$F$5")
-    add_defined_name(wb, "DeptFilter", f"{q(SHEET_DASH)}!$I$5")
+    add_defined_name(wb, "DeptFilter", f"{q(SHEET_DASH)}!$B$5")
+    add_defined_name(wb, "DashFromYear", f"{q(SHEET_DASH)}!$D$5")
+    add_defined_name(wb, "DashToYear", f"{q(SHEET_DASH)}!$F$5")
+    add_defined_name(wb, "EmpFilter", f"{q(SHEET_DASH)}!$H$5")
+    add_defined_name(wb, "SkillSetFilter", f"{q(SHEET_DASH)}!$J$5")
 
-    # From / To year dropdowns on Skill Matrix (any two years, no VBA)
     year_dv = DataValidation(type="list", formula1="=YearList", allow_blank=False)
     year_dv.promptTitle = "Year"
-    year_dv.prompt = "Pick any year. Use From and To to compare year 1 vs year 5, or any other pair."
+    year_dv.prompt = "Pick a year from the Years list."
     wb[SHEET_MATRIX].add_data_validation(year_dv)
     year_dv.add("B3")
-    year_dv.add("D3")
+    dash_year_dv = DataValidation(type="list", formula1="=YearList", allow_blank=False)
+    dash_year_dv.promptTitle = "Year"
+    dash_year_dv.prompt = "Pick From and To to compare any two years, including year 1 vs year 5."
+    wb[SHEET_DASH].add_data_validation(dash_year_dv)
+    dash_year_dv.add("D5")
+    dash_year_dv.add("F5")
 
     # Team average by year (respects department filter)
     ws["A4"] = "Year"
@@ -1276,11 +1220,10 @@ def build_calc(wb: Workbook) -> None:
         )
         ws.cell(r, 5).number_format = "0.00"
 
-    # Employee skill compare: First / Previous / Latest
+    # Employee skill compare: From year / To year
     ws["G4"] = "Skill"
-    ws["H4"] = "First"
-    ws["I4"] = "LastYear"
-    ws["J4"] = "Latest"
+    ws["H4"] = "From"
+    ws["I4"] = "To"
     for skill_i in range(NUM_SKILL_SLOTS):
         r = 5 + skill_i
         srow = 6 + skill_i
@@ -1288,21 +1231,14 @@ def build_calc(wb: Workbook) -> None:
         ws.cell(
             r,
             8,
-            f'=IF(OR(G{r}="",EmpFilter=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataRating,">=1")=0,"",'
-            f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,'
-            f'MINIFS(DataYear,DataEmployee,EmpFilter,DataSkill,G{r},DataRating,">=1")),"")))',
+            f'=IF(OR(G{r}="",EmpFilter="",DashFromYear=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashFromYear,DataRating,">=1")=0,"",'
+            f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashFromYear),"")))',
         )
         ws.cell(
             r,
             9,
-            f'=IF(OR(G{r}="",EmpFilter="",PreviousYear=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataYear,PreviousYear,DataRating,">=1")=0,"",'
-            f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,PreviousYear),"")))',
-        )
-        ws.cell(
-            r,
-            10,
-            f'=IF(OR(G{r}="",EmpFilter=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataYear,LatestYear,DataRating,">=1")=0,"",'
-            f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,LatestYear),"")))',
+            f'=IF(OR(G{r}="",EmpFilter="",DashToYear=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashToYear,DataRating,">=1")=0,"",'
+            f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashToYear),"")))',
         )
 
     # Skill-set required skills (contiguous rows with the same set name)
@@ -1346,20 +1282,20 @@ def build_calc(wb: Workbook) -> None:
             ws.cell(
                 r,
                 21 + k,
-                f'=IF(OR(L{r}="",{scol}$4=""),"",IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,LatestYear)=0,"",'
-                f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,LatestYear)))",
+                f'=IF(OR(L{r}="",{scol}$4=""),"",IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,DashToYear)=0,"",'
+                f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,DashToYear)))",
             )
             ws.cell(
                 r,
                 27 + k,
-                f'=IF(OR(L{r}="",{scol}$4="",PreviousYear=""),"",IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,PreviousYear)=0,"",'
-                f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,PreviousYear)))",
+                f'=IF(OR(L{r}="",{scol}$4="",DashFromYear=""),"",IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,DashFromYear)=0,"",'
+                f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,DashFromYear)))",
             )
         ws.cell(r, 13, f'=IF(L{r}="","",IFERROR(ROUND(AVERAGE({latest_helpers[0]}{r}:{latest_helpers[-1]}{r}),2),""))')
         ws.cell(
             r,
             14,
-            f'=IF(OR(L{r}="",M{r}="",PreviousYear=""),"",IFERROR(ROUND(M{r}-AVERAGE({prev_helpers[0]}{r}:{prev_helpers[-1]}{r}),2),""))',
+            f'=IF(OR(L{r}="",M{r}="",DashFromYear=""),"",IFERROR(ROUND(M{r}-AVERAGE({prev_helpers[0]}{r}:{prev_helpers[-1]}{r}),2),""))',
         )
         ws.cell(
             r,
@@ -1398,135 +1334,141 @@ def build_calc(wb: Workbook) -> None:
 # ===========================================================================
 # Dashboard
 # ===========================================================================
-def kpi_card(ws, col, title, formula, color, fmt="0.00") -> None:
-    ws.merge_cells(start_row=7, start_column=col, end_row=7, end_column=col + 2)
-    ws.merge_cells(start_row=8, start_column=col, end_row=9, end_column=col + 2)
-    head = ws.cell(7, col, title)
+def kpi_card(ws, row, col, title, formula, color, fmt="0.00") -> None:
+    ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col + 2)
+    ws.merge_cells(start_row=row + 1, start_column=col, end_row=row + 2, end_column=col + 2)
+    head = ws.cell(row, col, title)
     head.font = font(10, bold=True, color=WHITE)
     head.fill = fill(color)
     head.alignment = align("center")
-    val = ws.cell(8, col, formula)
+    val = ws.cell(row + 1, col, formula)
     val.font = font(22, bold=True, color=NAVY if color == GOLD else WHITE)
     val.fill = fill(YELLOW if color == GOLD else color)
     val.alignment = align("center")
     val.number_format = fmt
-    for r in (7, 8, 9):
+    for r in (row, row + 1, row + 2):
         for c in range(col, col + 3):
-            ws.cell(r, c).fill = fill(YELLOW if color == GOLD and r > 7 else color)
+            ws.cell(r, c).fill = fill(YELLOW if color == GOLD and r > row else color)
             ws.cell(r, c).border = Border(
                 left=Side(style="thin", color=WHITE),
                 right=Side(style="thin", color=WHITE),
             )
 
 
+def team_year_avg(year_name: str) -> str:
+    inner = (
+        f'IF(DeptFilter="(All departments)",'
+        f"AVERAGEIFS(DataRating,DataYear,{year_name}),"
+        f"AVERAGEIFS(DataRating,DataYear,{year_name},DataDept,DeptFilter))"
+    )
+    return f'IFERROR(ROUND({inner},2),"-")'
+
+
+def team_year_avg_raw(year_name: str) -> str:
+    return (
+        f'IF(DeptFilter="(All departments)",'
+        f"AVERAGEIFS(DataRating,DataYear,{year_name}),"
+        f"AVERAGEIFS(DataRating,DataYear,{year_name},DataDept,DeptFilter))"
+    )
+
+
+def skill_year_avg(skill_cell: str, year_name: str) -> str:
+    return (
+        f'IFERROR(IF(DeptFilter="(All departments)",'
+        f"AVERAGEIFS(DataRating,DataSkill,{skill_cell},DataYear,{year_name}),"
+        f"AVERAGEIFS(DataRating,DataSkill,{skill_cell},DataYear,{year_name},DataDept,DeptFilter)),\"\")"
+    )
+
+
 def build_dashboard(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_DASH, 1)
-    add_navigation(ws, SHEET_DASH, 18)
+    add_navigation(ws, SHEET_DASH, 13)
 
-    ws.merge_cells("A2:R2")
-    style_title(ws["A2"], "Dashboard — year on year")
-    ws.merge_cells("A3:R3")
+    ws.merge_cells("A2:M2")
+    style_title(ws["A2"], "Dashboard")
+    ws.merge_cells("A3:M3")
     ws["A3"] = (
-        '="Team view, one person, or a skillset. Latest year with ratings: "&IF(LatestYear="","-",LatestYear)'
-        '&"  |  Previous: "&IF(PreviousYear="","-",PreviousYear)&"  |  Calendar: "&CalendarYear'
+        "Compare any two years here (year 1 vs year 5, last year vs this year, or anything in between). "
+        "Skill Matrix is the current-year grid only."
     )
     ws["A3"].font = font(11, italic=True, color=MUTED)
 
-    # ----- Filter bar -----
-    ws.merge_cells("A4:R4")
-    ws["A4"] = "Filters — pick an employee, a skillset to see who can do that job, and a department for the team charts."
-    ws["A4"].font = font(10, italic=True, color=WHITE)
-    ws["A4"].fill = fill(NAVY)
-    for c in range(1, 19):
-        ws.cell(4, c).fill = fill(NAVY)
+    labels = [
+        (1, "Department"),
+        (3, "From year"),
+        (5, "To year"),
+        (7, "Employee"),
+        (9, "Skillset"),
+    ]
+    for col, label in labels:
+        cell = ws.cell(5, col, label)
+        cell.font = font(10, bold=True, color=WHITE)
+        cell.fill = fill(TEAL)
+        cell.alignment = align("center")
 
-    ws["A5"] = "Employee"
-    ws["B5"] = ">"
-    ws["C5"] = EMPLOYEES[0][1]
-    ws["D5"] = "Skillset"
-    ws["E5"] = ">"
-    ws["F5"] = SKILL_SETS[0][0]
-    ws["G5"] = "Department"
-    ws["H5"] = ">"
-    ws["I5"] = "(All departments)"
-    ws["K5"] = '=HYPERLINK("#\'Years\'!A1","Add / manage years")'
-    ws["K5"].font = font(11, bold=True, color=WHITE, underline="single")
-    ws["K5"].fill = fill(TEAL)
-    ws.merge_cells("K5:M5")
-    ws["K5"].alignment = align("center")
-    for col in (1, 4, 7):
-        ws.cell(5, col).font = font(11, bold=True, color=WHITE)
-        ws.cell(5, col).fill = fill(TEAL)
-        ws.cell(5, col).alignment = align("center")
-    for col in (2, 5, 8):
-        ws.cell(5, col).fill = fill(TEAL)
-        ws.cell(5, col).font = font(11, bold=True, color=WHITE)
-        ws.cell(5, col).alignment = align("center")
-    for col in (3, 6, 9):
+    ws["B5"] = "(All departments)"
+    ws["D5"] = 2023
+    ws["F5"] = 2026
+    ws["H5"] = EMPLOYEES[0][1]
+    ws["J5"] = SKILL_SETS[0][0]
+    for col in (2, 4, 6, 8, 10):
         style_input(ws.cell(5, col))
         ws.cell(5, col).font = font(12, bold=True, color=NAVY)
+        ws.cell(5, col).number_format = "0" if col in (4, 6) else "General"
+    ws.merge_cells("K5:L5")
+    ws["K5"] = '=HYPERLINK("#\'Years\'!A1","Years")'
+    ws["K5"].font = font(11, bold=True, color=WHITE, underline="single")
+    ws["K5"].fill = fill(NAVY)
+    ws["K5"].alignment = align("center")
+    ws["L5"].fill = fill(NAVY)
+    ws.row_dimensions[5].height = 26
 
     emp_dv = DataValidation(type="list", formula1="=EmployeeList", allow_blank=False)
     emp_dv.promptTitle = "Employee"
-    emp_dv.prompt = "Choose someone to see their skill history"
+    emp_dv.prompt = "One person's From vs To scores"
     ws.add_data_validation(emp_dv)
-    emp_dv.add("C5")
+    emp_dv.add("H5")
 
     set_dv = DataValidation(type="list", formula1="=SkillSetList", allow_blank=False)
     set_dv.promptTitle = "Skillset"
-    set_dv.prompt = "Choose a skillset to rank who can do it. Add more on the Skill Sets sheet."
+    set_dv.prompt = "Who is strongest at this skillset in the To year"
     ws.add_data_validation(set_dv)
-    set_dv.add("F5")
+    set_dv.add("J5")
 
     dept_dv = DataValidation(type="list", formula1="=DeptFilterList", allow_blank=False)
     dept_dv.promptTitle = "Department"
-    dept_dv.prompt = "Limit the team overview to one department, or All"
+    dept_dv.prompt = "Limit the team comparison, or All"
     ws.add_data_validation(dept_dv)
-    dept_dv.add("I5")
+    dept_dv.add("B5")
 
-    ws.row_dimensions[5].height = 26
-
-    # ----- Org overview KPIs -----
-    ws.merge_cells("A6:R6")
-    ws["A6"] = '="Team overview"&IF(DeptFilter="(All departments)",""," - "&DeptFilter)'
+    # ----- Team comparison -----
+    ws.merge_cells("A6:M6")
+    ws["A6"] = (
+        '="Team: "&DashFromYear&" vs "&DashToYear'
+        '&IF(DeptFilter="(All departments)","","  |  "&DeptFilter)'
+    )
     ws["A6"].font = font(14, bold=True, color=NAVY)
 
+    kpi_card(ws, 7, 1, '=DashFromYear&" average"', "=" + team_year_avg("DashFromYear"), "5B8FB9")
+    kpi_card(ws, 7, 4, '=DashToYear&" average"', "=" + team_year_avg("DashToYear"), TEAL)
     kpi_card(
         ws,
-        1,
-        "Latest year average",
-        '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,LatestYear),AVERAGEIFS(DataRating,DataYear,LatestYear,DataDept,DeptFilter)),2),"-")',
-        TEAL,
-    )
-    kpi_card(ws, 4, "Previous year average",
-             '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,PreviousYear),AVERAGEIFS(DataRating,DataYear,PreviousYear,DataDept,DeptFilter)),2),"-")',
-             "5B8FB9")
-    kpi_card(ws, 7, "Change vs last year",
-             '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,LatestYear),AVERAGEIFS(DataRating,DataYear,LatestYear,DataDept,DeptFilter))'
-             '-IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,PreviousYear),AVERAGEIFS(DataRating,DataYear,PreviousYear,DataDept,DeptFilter)),2),"-")',
-             GOLD, "+0.00;-0.00;0.00")
-    kpi_card(
-        ws,
-        10,
-        "Change vs first year",
-        '=IFERROR(ROUND(IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,LatestYear),AVERAGEIFS(DataRating,DataYear,LatestYear,DataDept,DeptFilter))'
-        '-IF(DeptFilter="(All departments)",AVERAGEIFS(DataRating,DataYear,MINIFS(DataYear,DataRating,">=1")),AVERAGEIFS(DataRating,DataYear,MINIFS(DataYear,DataRating,">=1",DataDept,DeptFilter),DataDept,DeptFilter)),2),"-")',
-        NAVY,
+        7,
+        7,
+        "Change",
+        f"=IFERROR(ROUND(({team_year_avg_raw('DashToYear')})-({team_year_avg_raw('DashFromYear')}),2),\"-\")",
+        GOLD,
         "+0.00;-0.00;0.00",
     )
-    kpi_card(ws, 13, "Ratings in latest year",
-             '=IF(DeptFilter="(All departments)",COUNTIFS(DataYear,LatestYear,DataRating,">=1"),COUNTIFS(DataYear,LatestYear,DataRating,">=1",DataDept,DeptFilter))',
-             "6B5B95", "0")
 
-    # Line chart: team by year
     chart1 = LineChart()
-    chart1.title = "Team average — year on year"
-    chart1.y_axis.title = "Average (1–5)"
+    chart1.title = "Team average by year"
+    chart1.y_axis.title = "Average (1-5)"
     chart1.y_axis.scaling.min = 1
     chart1.y_axis.scaling.max = 5
     chart1.style = 10
-    chart1.height = 8
-    chart1.width = 15
+    chart1.height = 7
+    chart1.width = 12
     chart1.legend = None
     data = Reference(wb[SHEET_CALC], min_col=2, min_row=4, max_row=4 + NUM_YEAR_SLOTS)
     cats = Reference(wb[SHEET_CALC], min_col=1, min_row=5, max_row=4 + NUM_YEAR_SLOTS)
@@ -1538,297 +1480,157 @@ def build_dashboard(wb: Workbook) -> None:
         chart1.series[0].marker = Marker(symbol="circle", size=8)
     ws.add_chart(chart1, "A11")
 
-    # Skill latest vs last vs first table
-    ws["I11"] = "Skill"
-    ws["J11"] = "First year"
-    ws["K11"] = "Last year"
-    ws["L11"] = "Latest"
-    ws["M11"] = "vs last year"
-    for col in range(9, 14):
-        c = ws.cell(11, col)
+    ws["J7"] = "Skillset"
+    ws["K7"] = "=DashFromYear"
+    ws["L7"] = "=DashToYear"
+    ws["M7"] = "Change"
+    for col in range(10, 14):
+        c = ws.cell(7, col)
         c.font = font(10, bold=True, color=WHITE)
         c.fill = fill(NAVY)
         c.alignment = align("center", wrap=True)
         c.border = THIN
-    for skill_i in range(len(SKILLS)):
-        r = 12 + skill_i
+        c.number_format = "0"
+    for skill_i in range(NUM_SKILL_SLOTS):
+        r = 8 + skill_i
         srow = 6 + skill_i
-        ws.cell(r, 9, f'=IF({q(SHEET_SKILLS)}!B{srow}="","",{q(SHEET_SKILLS)}!B{srow})')
-        ws.cell(
-            r,
-            10,
-            f'=IF(I{r}="","",IFERROR(IF(DeptFilter="(All departments)",'
-            f'AVERAGEIFS(DataRating,DataSkill,I{r},DataYear,MINIFS(DataYear,DataSkill,I{r},DataRating,">=1")),'
-            f'AVERAGEIFS(DataRating,DataSkill,I{r},DataYear,MINIFS(DataYear,DataSkill,I{r},DataRating,">=1"),DataDept,DeptFilter)),""))',
-        )
+        ws.cell(r, 10, f'=IF({q(SHEET_SKILLS)}!B{srow}="","",{q(SHEET_SKILLS)}!B{srow})')
         ws.cell(
             r,
             11,
-            f'=IF(OR(I{r}="",PreviousYear=""),"",IFERROR(IF(DeptFilter="(All departments)",'
-            f"AVERAGEIFS(DataRating,DataSkill,I{r},DataYear,PreviousYear),"
-            f"AVERAGEIFS(DataRating,DataSkill,I{r},DataYear,PreviousYear,DataDept,DeptFilter)),\"\"))",
+            f'=IF(OR(J{r}="",DashFromYear=""),"",{skill_year_avg("J" + str(r), "DashFromYear")})',
         )
         ws.cell(
             r,
             12,
-            f'=IF(I{r}="","",IFERROR(IF(DeptFilter="(All departments)",'
-            f"AVERAGEIFS(DataRating,DataSkill,I{r},DataYear,LatestYear),"
-            f"AVERAGEIFS(DataRating,DataSkill,I{r},DataYear,LatestYear,DataDept,DeptFilter)),\"\"))",
+            f'=IF(OR(J{r}="",DashToYear=""),"",{skill_year_avg("J" + str(r), "DashToYear")})',
         )
         ws.cell(r, 13, f'=IF(OR(K{r}="",L{r}=""),"",ROUND(L{r}-K{r},2))')
-        for c in range(9, 14):
+        for c in range(10, 14):
             ws.cell(r, c).border = THIN
             ws.cell(r, c).font = font(10)
-            if c > 9:
+            if c > 10:
                 ws.cell(r, c).alignment = align("center")
                 ws.cell(r, c).number_format = "0.00" if c < 13 else "+0.00;-0.00;0.00"
-        apply_change_cf(ws, f"M{r}")
+    apply_rating_cf(ws, f"K8:L{7 + NUM_SKILL_SLOTS}")
+    apply_change_cf(ws, f"M8:M{7 + NUM_SKILL_SLOTS}")
 
-    chart_skill = BarChart()
-    chart_skill.type = "bar"
-    chart_skill.grouping = "clustered"
-    chart_skill.title = "Each skill: last year vs latest"
-    chart_skill.style = 10
-    chart_skill.y_axis.title = None
-    chart_skill.x_axis.scaling.min = 1
-    chart_skill.x_axis.scaling.max = 5
-    chart_skill.height = 8
-    chart_skill.width = 14
-    sdata = Reference(ws, min_col=11, min_row=11, max_col=12, max_row=11 + len(SKILLS))
-    scats = Reference(ws, min_col=9, min_row=12, max_row=11 + len(SKILLS))
-    chart_skill.add_data(sdata, titles_from_data=True)
-    chart_skill.set_categories(scats)
-    chart_skill.legend.position = "b"
-    if chart_skill.series:
-        chart_skill.series[0].graphicalProperties.solidFill = "5B8FB9"
-        if len(chart_skill.series) > 1:
-            chart_skill.series[1].graphicalProperties.solidFill = TEAL
-    ws.add_chart(chart_skill, "O11")
-
-    # ----- Employee explorer -----
-    emp_title_row = 24
-    ws.merge_cells(start_row=emp_title_row, start_column=1, end_row=emp_title_row, end_column=18)
+    # ----- One person -----
+    emp_row = 26
+    ws.merge_cells(start_row=emp_row, start_column=1, end_row=emp_row, end_column=13)
     ws.cell(
-        emp_title_row,
+        emp_row,
         1,
-        '=IF(EmpFilter="","Select an employee in the filter above",'
-        'EmpFilter&" - skill overview since they joined")',
+        '=IF(EmpFilter="","Pick an employee above",'
+        'EmpFilter&"  |  "&DashFromYear&" vs "&DashToYear)',
     ).font = font(14, bold=True, color=NAVY)
 
-    ws.merge_cells(start_row=25, start_column=1, end_row=25, end_column=18)
-    ws["A25"] = (
+    ws.merge_cells(start_row=27, start_column=1, end_row=27, end_column=13)
+    ws["A27"] = (
         '=IF(EmpFilter="","",'
         '"Department: "&IFERROR(INDEX(Employees!C6:C21,MATCH(EmpFilter,Employees!B6:B21,0)),"-")'
-        '&"   |   Hired: "&TEXT(IFERROR(INDEX(Employees!D6:D21,MATCH(EmpFilter,Employees!B6:B21,0)),""),"YYYY-MM-DD")'
-        '&"   |   First ratings: "&IFERROR(MINIFS(DataYear,DataEmployee,EmpFilter,DataRating,">=1"),"-")'
-        '&"   |   Latest: "&LatestYear)'
+        '&"   |   Hired: "&TEXT(IFERROR(INDEX(Employees!D6:D21,MATCH(EmpFilter,Employees!B6:B21,0)),""),"YYYY-MM-DD"))'
     )
-    ws["A25"].font = font(11, color=MUTED)
+    ws["A27"].font = font(11, color=MUTED)
 
-    emp_kpis = [
-        (1, "Latest average", '=IFERROR(ROUND(AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,LatestYear),2),"-")', TEAL, "0.00"),
-        (4, "vs last year",
-         '=IFERROR(ROUND(AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,LatestYear)'
-         '-AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,PreviousYear),2),"-")', GOLD, "+0.00;-0.00;0.00"),
-        (7, "vs first year (since joined)",
-         '=IFERROR(ROUND(AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,LatestYear)'
-         '-AVERAGEIFS(DataRating,DataEmployee,EmpFilter,DataYear,MINIFS(DataYear,DataEmployee,EmpFilter,DataRating,">=1")),2),"-")',
-         NAVY, "+0.00;-0.00;0.00"),
-        (10, "Skills below target",
-         '=COUNTIFS(Calc!G5:G20,"<>",Calc!J5:J20,"<"&TargetRating)', RED, "0"),
-        (13, "Skills rated this year",
-         '=COUNTIFS(DataEmployee,EmpFilter,DataYear,LatestYear,DataRating,">=1")', "6B5B95", "0"),
-    ]
-    for col, title, formula, color, fmt in emp_kpis:
-        ws.merge_cells(start_row=26, start_column=col, end_row=26, end_column=col + 2)
-        ws.merge_cells(start_row=27, start_column=col, end_row=28, end_column=col + 2)
-        h = ws.cell(26, col, title)
-        h.font = font(9, bold=True, color=WHITE)
-        h.fill = fill(color)
-        h.alignment = align("center", wrap=True)
-        v = ws.cell(27, col, formula)
-        v.font = font(20, bold=True, color=NAVY if color in (GOLD, RED) else WHITE)
-        v.fill = fill(YELLOW if color in (GOLD, RED) else color)
-        v.alignment = align("center")
-        v.number_format = fmt
-        for r in (26, 27, 28):
-            for c in range(col, col + 3):
-                ws.cell(r, c).fill = fill(YELLOW if color in (GOLD, RED) and r > 26 else color)
-                ws.cell(r, c).border = Border(
-                    left=Side(style="thin", color=WHITE),
-                    right=Side(style="thin", color=WHITE),
-                )
-
-    # Employee skill table
-    ws["A30"] = "Skill"
-    ws["B30"] = "First (joined)"
-    ws["C30"] = "Last year"
-    ws["D30"] = "Latest"
-    ws["E30"] = "vs last year"
-    ws["F30"] = "Since joined"
-    for col in range(1, 7):
-        c = ws.cell(30, col)
+    ws["A28"] = "Skillset"
+    ws["B28"] = "=DashFromYear"
+    ws["C28"] = "=DashToYear"
+    ws["D28"] = "Change"
+    for col in range(1, 5):
+        c = ws.cell(28, col)
         c.font = font(10, bold=True, color=WHITE)
         c.fill = fill(NAVY)
         c.alignment = align("center", wrap=True)
         c.border = THIN
+        c.number_format = "0"
     for skill_i in range(NUM_SKILL_SLOTS):
-        r = 31 + skill_i
-        ws.cell(r, 1, f"=IF(Calc!G{5 + skill_i}=\"\",\"\",Calc!G{5 + skill_i})")
-        ws.cell(r, 2, f"=IF(A{r}=\"\",\"\",IF(Calc!H{5 + skill_i}=0,\"\",Calc!H{5 + skill_i}))")
-        ws.cell(r, 3, f"=IF(A{r}=\"\",\"\",IF(Calc!I{5 + skill_i}=0,\"\",Calc!I{5 + skill_i}))")
-        ws.cell(r, 4, f"=IF(A{r}=\"\",\"\",IF(Calc!J{5 + skill_i}=0,\"\",Calc!J{5 + skill_i}))")
-        ws.cell(r, 5, f'=IF(OR(C{r}="",D{r}=""),"",D{r}-C{r})')
-        ws.cell(r, 6, f'=IF(OR(B{r}="",D{r}=""),"",D{r}-B{r})')
-        for c in range(1, 7):
+        r = 29 + skill_i
+        ws.cell(r, 1, f'=IF(Calc!G{5 + skill_i}="","",Calc!G{5 + skill_i})')
+        ws.cell(r, 2, f'=IF(A{r}="","",IF(Calc!H{5 + skill_i}="","",Calc!H{5 + skill_i}))')
+        ws.cell(r, 3, f'=IF(A{r}="","",IF(Calc!I{5 + skill_i}="","",Calc!I{5 + skill_i}))')
+        ws.cell(r, 4, f'=IF(OR(B{r}="",C{r}=""),"",C{r}-B{r})')
+        for c in range(1, 5):
             ws.cell(r, c).border = THIN
             ws.cell(r, c).alignment = align("center" if c > 1 else "left")
-        ws.cell(r, 5).number_format = "+0;-0;0"
-        ws.cell(r, 6).number_format = "+0;-0;0"
-    apply_rating_cf(ws, f"B31:D{30 + NUM_SKILL_SLOTS}")
-    apply_change_cf(ws, f"E31:F{30 + NUM_SKILL_SLOTS}")
+        ws.cell(r, 4).number_format = "+0;-0;0"
+    apply_rating_cf(ws, f"B29:C{28 + NUM_SKILL_SLOTS}")
+    apply_change_cf(ws, f"D29:D{28 + NUM_SKILL_SLOTS}")
 
-    chart_emp_line = LineChart()
-    chart_emp_line.title = "This person's average by year"
-    chart_emp_line.y_axis.title = "Average (1–5)"
-    chart_emp_line.y_axis.scaling.min = 1
-    chart_emp_line.y_axis.scaling.max = 5
-    chart_emp_line.style = 10
-    chart_emp_line.height = 8
-    chart_emp_line.width = 12
-    chart_emp_line.legend = None
+    chart_emp = LineChart()
+    chart_emp.title = "This person's average by year"
+    chart_emp.y_axis.title = "Average (1-5)"
+    chart_emp.y_axis.scaling.min = 1
+    chart_emp.y_axis.scaling.max = 5
+    chart_emp.style = 10
+    chart_emp.height = 7
+    chart_emp.width = 12
+    chart_emp.legend = None
     edata = Reference(wb[SHEET_CALC], min_col=5, min_row=4, max_row=4 + NUM_YEAR_SLOTS)
     ecats = Reference(wb[SHEET_CALC], min_col=4, min_row=5, max_row=4 + NUM_YEAR_SLOTS)
-    chart_emp_line.add_data(edata, titles_from_data=True)
-    chart_emp_line.set_categories(ecats)
-    if chart_emp_line.series:
-        chart_emp_line.series[0].graphicalProperties.line.solidFill = NAVY
-        chart_emp_line.series[0].marker = Marker(symbol="circle", size=7)
-    ws.add_chart(chart_emp_line, "H30")
+    chart_emp.add_data(edata, titles_from_data=True)
+    chart_emp.set_categories(ecats)
+    if chart_emp.series:
+        chart_emp.series[0].graphicalProperties.line.solidFill = NAVY
+        chart_emp.series[0].marker = Marker(symbol="circle", size=7)
+    ws.add_chart(chart_emp, "F28")
 
-    chart_emp_bar = BarChart()
-    chart_emp_bar.type = "bar"
-    chart_emp_bar.grouping = "clustered"
-    chart_emp_bar.title = "Each skill: first vs last year vs latest"
-    chart_emp_bar.style = 10
-    chart_emp_bar.x_axis.scaling.min = 1
-    chart_emp_bar.x_axis.scaling.max = 5
-    chart_emp_bar.height = 8
-    chart_emp_bar.width = 14
-    eb = Reference(wb[SHEET_CALC], min_col=8, min_row=4, max_col=10, max_row=4 + len(SKILLS))
-    ebcats = Reference(wb[SHEET_CALC], min_col=7, min_row=5, max_row=4 + len(SKILLS))
-    chart_emp_bar.add_data(eb, titles_from_data=True)
-    chart_emp_bar.set_categories(ebcats)
-    chart_emp_bar.legend.position = "b"
-    if chart_emp_bar.series:
-        chart_emp_bar.series[0].graphicalProperties.solidFill = "8A8178"
-        if len(chart_emp_bar.series) > 1:
-            chart_emp_bar.series[1].graphicalProperties.solidFill = "5B8FB9"
-        if len(chart_emp_bar.series) > 2:
-            chart_emp_bar.series[2].graphicalProperties.solidFill = TEAL
-    ws.add_chart(chart_emp_bar, "M30")
-
-    # ----- Who can do the job -----
-    job_row = 50
-    ws.merge_cells(start_row=job_row, start_column=1, end_row=job_row, end_column=18)
+    # ----- Who is strongest -----
+    job_row = 47
+    ws.merge_cells(start_row=job_row, start_column=1, end_row=job_row, end_column=13)
     ws.cell(
         job_row,
         1,
-        '=IF(SkillSetFilter="","Select a skill set in the filter above",'
-        '"Who can do the job - "&SkillSetFilter&"  (ranked by latest-year average on the required skills)")',
+        '=IF(SkillSetFilter="","Pick a skillset above",'
+        '"Who is strongest: "&SkillSetFilter&"  ("&DashToYear&" vs "&DashFromYear&")")',
     ).font = font(14, bold=True, color=NAVY)
 
-    ws.merge_cells(start_row=51, start_column=1, end_row=51, end_column=12)
-    ws["A51"] = (
-        f'="Required: "&TRIM(Calc!M4&IF(Calc!N4="","",", "&Calc!N4)&IF(Calc!O4="","",", "&Calc!O4)'
-        f'&IF(Calc!P4="","",", "&Calc!P4)&IF(Calc!Q4="","",", "&Calc!Q4)&IF(Calc!R4="","",", "&Calc!R4))'
-        f'&"   |   Minimums: "&TRIM(TEXT(Calc!M5,"0")&IF(Calc!N5="","",", "&TEXT(Calc!N5,"0"))'
-        f'&IF(Calc!O5="","",", "&TEXT(Calc!O5,"0"))&IF(Calc!P5="","",", "&TEXT(Calc!P5,"0"))'
-        f'&IF(Calc!Q5="","",", "&TEXT(Calc!Q5,"0"))&IF(Calc!R5="","",", "&TEXT(Calc!R5,"0")))'
-    )
-    ws["A51"].font = font(11, color=MUTED)
-
-    headers = ["Rank", "Employee", "Department", "Latest avg", "vs last year", "Skills rated", "At / above min"]
+    headers = ["Rank", "Employee", "Department", "To year", "Change"]
     for i, h in enumerate(headers, 1):
-        c = ws.cell(52, i, h)
+        c = ws.cell(48, i, h)
         c.font = font(10, bold=True, color=WHITE)
         c.fill = fill(NAVY)
         c.alignment = align("center", wrap=True)
         c.border = THIN
-    ws.row_dimensions[52].height = 28
-
     for i in range(NUM_EMPLOYEE_SLOTS):
-        r = 53 + i
+        r = 49 + i
         ws.cell(r, 1, f'=IF(Calc!S{8 + i}="","",{i + 1})')
-        ws.cell(r, 2, f"=IF(Calc!S{8 + i}=\"\",\"\",Calc!S{8 + i})")
+        ws.cell(r, 2, f'=IF(Calc!S{8 + i}="","",Calc!S{8 + i})')
         ws.cell(
             r,
             3,
             f'=IF(B{r}="","",IFERROR(INDEX(Employees!C6:C21,MATCH(B{r},Employees!B6:B21,0)),""))',
         )
-        ws.cell(r, 4, f"=IF(B{r}=\"\",\"\",Calc!T{8 + i})")
+        ws.cell(r, 4, f'=IF(B{r}="","",Calc!T{8 + i})')
         ws.cell(
             r,
             5,
             f'=IF(B{r}="","",IFERROR(INDEX(Calc!N8:N23,MATCH(B{r},Calc!L8:L23,0)),""))',
         )
-        ws.cell(
-            r,
-            6,
-            f'=IF(B{r}="","",IFERROR(INDEX(Calc!O8:O23,MATCH(B{r},Calc!L8:L23,0)),""))',
-        )
-        ws.cell(
-            r,
-            7,
-            f'=IF(B{r}="","",IFERROR(INDEX(Calc!P8:P23,MATCH(B{r},Calc!L8:L23,0)),""))',
-        )
-        for c in range(1, 8):
+        for c in range(1, 6):
             ws.cell(r, c).border = THIN
             ws.cell(r, c).alignment = align("center" if c != 2 else "left")
         ws.cell(r, 4).number_format = "0.00"
         ws.cell(r, 5).number_format = "+0.00;-0.00;0.00"
         ws.cell(r, 2).font = font(11, bold=True)
-    apply_change_cf(ws, f"E53:E{52 + NUM_EMPLOYEE_SLOTS}")
+    apply_change_cf(ws, f"E49:E{48 + NUM_EMPLOYEE_SLOTS}")
     ws.conditional_formatting.add(
-        "A53:G53",
-        FormulaRule(formula=["$B53<>\"\""], fill=fill("D4EDDA"), font=font(11, bold=True)),
+        "A49:E49",
+        FormulaRule(formula=["$B49<>\"\""], fill=fill("D4EDDA"), font=font(11, bold=True)),
     )
 
-    chart_job = BarChart()
-    chart_job.type = "bar"
-    chart_job.title = "Best current fit for the selected skill set"
-    chart_job.style = 10
-    chart_job.x_axis.scaling.min = 1
-    chart_job.x_axis.scaling.max = 5
-    chart_job.height = 8
-    chart_job.width = 14
-    chart_job.legend = None
-    jdata = Reference(wb[SHEET_CALC], min_col=20, min_row=7, max_row=7 + len(EMPLOYEES))
-    jcats = Reference(wb[SHEET_CALC], min_col=19, min_row=8, max_row=7 + len(EMPLOYEES))
-    chart_job.add_data(jdata, titles_from_data=True)
-    chart_job.set_categories(jcats)
-    if chart_job.series:
-        chart_job.series[0].graphicalProperties.solidFill = TEAL
-    ws.add_chart(chart_job, "J52")
-
-    ws.merge_cells("A70:R71")
-    ws["A70"] = (
-        "Tip: change Employee, Skillset, or Department in the yellow filter cells at the top. "
-        "Add a person on Employees (next yellow row). Add a skillset on Skills and Skill Sets. "
-        "Add a year on Years (2023-2034 are already columns). Departments: Vision, Sound, Lighting, Staging."
+    ws.merge_cells("A67:M67")
+    ws["A67"] = (
+        "Add a person on Employees (yellow row). Add a skillset on Skills and Skill Sets. "
+        "Departments: Vision, Sound, Lighting, Staging."
     )
-    ws["A70"].font = font(10, italic=True, color=MUTED)
-    ws["A70"].alignment = align("left", wrap=True)
+    ws["A67"].font = font(10, italic=True, color=MUTED)
 
-    widths = [16, 16, 16, 16, 14, 14, 14, 16]
-    for i, w in enumerate(widths, 1):
+    for i, w in enumerate([22, 16, 14, 12, 12, 14, 14, 18, 16, 22, 12, 12, 12], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
-    for col in range(9, 19):
-        ws.column_dimensions[get_column_letter(col)].width = 12
-    ws.column_dimensions["A"].width = 22
     ws.freeze_panes = "A6"
     ws.sheet_view.showGridLines = False
-    ws.sheet_view.zoomScale = 90
+    ws.sheet_view.zoomScale = 100
     ws.sheet_properties.tabColor = GOLD
     apply_print(ws, landscape=True)
 
@@ -1866,8 +1668,8 @@ def build_how_to(wb: Workbook) -> None:
     style_title(ws["A2"], "How to use this skill matrix")
     ws.merge_cells("A3:L3")
     ws["A3"] = (
-        "Rate skills from 1 to 5 for a live-event vision crew, keep every year you have rated, "
-        "and use the Dashboard to look at the whole team, one operator over time, or who is strongest for a seat. "
+        "Rate skillsets from 1 to 5 for a live-event vision crew. "
+        "Skill Matrix is this year's grid. Dashboard compares any two years. "
         "Sample data is included — replace it with your crew."
     )
     ws["A3"].font = font(12, color=MUTED)
@@ -1876,23 +1678,21 @@ def build_how_to(wb: Workbook) -> None:
 
     box(
         ws, 5, 1, 14, 6,
-        "1. Glance at the whole crew",
-        "Open Skill Matrix. Each row is one person. Each skillset has two years and a Change column.\n\n"
-        "At the top, pick From year and To year (for example 2023 and 2026). "
-        "You can compare year 1 to year 5, or any other pair. No macros.\n\n"
-        "Green change = improved. Red = declined.\n\n"
-        "Type 1-5 ratings on the Ratings sheet (any year). The glance view updates.",
+        "1. This year's crew grid",
+        "Open Skill Matrix. Each row is one person. Each column is one skillset. "
+        "Only the selected year is shown (defaults to this calendar year).\n\n"
+        "Type 1-5 on the Ratings sheet. The grid updates.\n\n"
+        "There is no second year or Change column here — that lives on the Dashboard.",
         NAVY,
     )
     box(
         ws, 5, 7, 14, 12,
-        "2. New year — automatic, or add one",
-        "Years 2023-2034 are already on Ratings. When a new year starts, open Ratings and fill that column. "
-        "Then pick From and To on Skill Matrix (for example 2023 and 2027).\n\n"
-        "The Years sheet shows whether this calendar year is in the list. "
-        "To add 2035 or later: type it in the next yellow row on Years, oldest to newest. "
-        "A new column appears on Ratings, and the year is in the From / To dropdowns.",
-        TEAL,
+        "2. Compare years on the Dashboard",
+        "Pick From year and To year (for example 2023 and 2026, or year 1 vs year 5).\n\n"
+        "Team — average for each year, change, a line chart, and each skillset From / To / Change.\n\n"
+        "Employee — that person's scores for the two years.\n\n"
+        "Skillset — who is strongest in the To year, with change vs From.",
+        GOLD,
     )
     box(
         ws, 16, 1, 24, 6,
@@ -1905,14 +1705,11 @@ def build_how_to(wb: Workbook) -> None:
     )
     box(
         ws, 16, 7, 24, 12,
-        "4. Dashboard filters",
-        "Employee — that person's skillsets, last year vs latest, and since they joined.\n\n"
-        "Skillset — ranks who currently looks strongest for that seat "
-        "(Broadcast Camera Operation, PTZ, Shading / CCU, ATEM, Barco, Camera Switching, "
-        "Content Operation, Systems Tech, Technical Setup, Live Streaming). Add more on Skill Sets.\n\n"
-        "Department — Vision, Sound, Lighting, Staging, or All departments.\n\n"
-        "Line charts show year on year, not just two years.",
-        GOLD,
+        "4. New year",
+        "Years 2023-2034 are already on Ratings. When a new year starts, fill that column. "
+        "Skill Matrix follows the calendar year unless you pick another year.\n\n"
+        "To add 2035 or later: type it in the next yellow row on Years, oldest to newest.",
+        TEAL,
     )
 
     ws.merge_cells("A26:L26")
@@ -1990,7 +1787,7 @@ def main() -> None:
     wb.properties.creator = "Skill Matrix"
     wb.properties.description = (
         "Rate skillsets 1-5 across multiple years, add people and skillsets later, "
-        "and compare any two years on the crew matrix."
+        "and compare any two years on the dashboard."
     )
 
     path = "Employee_Skill_Matrix.xlsx"
