@@ -25,7 +25,8 @@ Each profile also expects **Technical Setup** and/or **Troubleshooting** at a mi
 | Sheet | What it is for |
 | --- | --- |
 | **How to Use** | Walkthrough and the 1–5 scale |
-| **Skill Matrix** | Ratings: one row per person per skill, one column per year |
+| **Skill Matrix** | Whole-crew glance: two years at a time, dropdown to scroll every employee |
+| **Ratings** | Type 1–5 for any year (source of truth) |
 | **Dashboard** | Filters, year-on-year charts, employee history, who can do a job |
 | **Employees** | People. Department and job title are dropdowns. Hire date drives “since they joined” |
 | **Skills** | Skill catalog. Add a row to add a skill |
@@ -36,10 +37,9 @@ Each profile also expects **Technical Setup** and/or **Troubleshooting** at a mi
 
 ## Rate a skill
 
-1. Open **Skill Matrix**.
-2. Find the person and skill (use the Employee filter on the header if you want one person at a time).
-3. Enter **1–5** in the column for that year. The current calendar year is highlighted.
-4. **First**, **Latest**, **vs last year**, and **Since joined** fill in on their own.
+1. Open **Ratings** and type **1–5** in the column for that year (every person × skill).
+2. Open **Skill Matrix** to see the **whole crew at once**. Each skill shows two years and the change.
+3. At the top, pick a **Year pair** (for example `2025 vs 2026`). Every employee’s columns update together. This is a dropdown, not a macro.
 
 ## Add a new year (automatic each year)
 

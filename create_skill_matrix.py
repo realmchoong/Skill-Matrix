@@ -36,6 +36,7 @@ SUMMARY_FIRST_COL = YEAR_FIRST_COL + NUM_YEAR_SLOTS
 
 SHEET_HOW = "How to Use"
 SHEET_MATRIX = "Skill Matrix"
+SHEET_RATINGS = "Ratings"
 SHEET_DASH = "Dashboard"
 SHEET_EMP = "Employees"
 SHEET_SKILLS = "Skills"
@@ -49,6 +50,7 @@ SHEET_CALC = "Calc"
 NAV_SHEETS = [
     SHEET_HOW,
     SHEET_MATRIX,
+    SHEET_RATINGS,
     SHEET_DASH,
     SHEET_EMP,
     SHEET_SKILLS,
@@ -57,6 +59,13 @@ NAV_SHEETS = [
     SHEET_SETS,
     SHEET_SETTINGS,
 ]
+
+GLANCE_PAIR_ROW = 3
+GLANCE_CAT_ROW = 4
+GLANCE_SKILL_ROW = 5
+GLANCE_SUB_ROW = 6
+GLANCE_START = 7
+GLANCE_END = GLANCE_START + NUM_EMPLOYEE_SLOTS - 1
 
 # ---------------------------------------------------------------------------
 # Theme
@@ -208,6 +217,12 @@ def align(h="left", v="center", wrap=False) -> Alignment:
 
 def q(sheet: str) -> str:
     return f"'{sheet}'"
+
+
+def glance_skill_columns(n: int) -> tuple[int, int, int]:
+    """1-based (earlier, later, change) columns for skill slot n (1-based)."""
+    start = 3 + (n - 1) * 3
+    return start, start + 1, start + 2
 
 
 def year_col(slot: int) -> int:
@@ -537,9 +552,10 @@ def build_years(wb: Workbook) -> None:
     ws.merge_cells("A3:D4")
     ws["A3"] = (
         '=IF(COUNTIF($B$8:$B$23,YEAR(TODAY()))>0,'
-        '"Calendar year "&YEAR(TODAY())&" is already a column on the Skill Matrix. '
-        'Open Skill Matrix and enter this year\'s 1–5 ratings. Next years through 2034 are already waiting — '
-        'when January arrives, just start rating that column. Nothing to copy from last year.",'
+        '"Calendar year "&YEAR(TODAY())&" is already a column on Ratings. '
+        'Open Ratings and enter this year\'s 1–5 scores. Then on Skill Matrix pick a year pair '
+        '(for example "&YEAR(TODAY())-1&" vs "&YEAR(TODAY())&") to glance at the whole crew. '
+        'Next years through 2034 are already waiting.",'
         '"New calendar year "&YEAR(TODAY())&" is not in the list yet. Type "&YEAR(TODAY())'
         '&" in the next yellow row in the Year column, then rate people on the Skill Matrix.")'
     )
@@ -550,7 +566,7 @@ def build_years(wb: Workbook) -> None:
     ws.merge_cells("F5:H6")
     ws["F5"] = (
         '=IF(COUNTIF($B$8:$B$23,YEAR(TODAY()))>0,'
-        'HYPERLINK("#\'Skill Matrix\'!A1","Rate "&YEAR(TODAY())&" on the Skill Matrix →"),'
+        'HYPERLINK("#\'Ratings\'!A1","Rate "&YEAR(TODAY())&" on Ratings →"),'
         'HYPERLINK("#Years!B20","Type "&YEAR(TODAY())&" in the yellow row →"))'
     )
     ws["F5"].font = font(13, bold=True, color=WHITE, underline="single")
@@ -563,7 +579,7 @@ def build_years(wb: Workbook) -> None:
     ws.merge_cells("A5:D6")
     ws["A5"] = (
         "To add a year beyond 2034 (or a missing historical year): type it in the next yellow row, "
-        "in order, oldest to newest. A new column appears on the Skill Matrix. "
+        "in order, oldest to newest. A new column appears on Ratings, and a new pair on Skill Matrix. "
         "Do not use a formula for a year that already has ratings."
     )
     ws["A5"].font = font(10, italic=True, color=MUTED)
@@ -879,21 +895,223 @@ def build_skill_sets(wb: Workbook) -> None:
 
 
 # ===========================================================================
-# Skill Matrix
+# Skill Matrix (two-year glance of the whole crew)
 # ===========================================================================
 def build_matrix(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_MATRIX, 0)
-    last_col = SUMMARY_FIRST_COL + 4
+    last_col = 2 + NUM_SKILL_SLOTS * 3
     add_navigation(ws, SHEET_MATRIX, last_col)
 
     ws.merge_cells(start_row=TITLE_ROW, start_column=1, end_row=TITLE_ROW, end_column=8)
-    style_title(ws["A2"], "Employee skill matrix")
+    style_title(ws["A2"], "Crew skill matrix")
     ws.merge_cells(start_row=TITLE_ROW, start_column=9, end_row=TITLE_ROW, end_column=last_col)
     ws.cell(
         TITLE_ROW,
         9,
-        "One row per person per skill. Year columns come from the Years sheet. "
-        "The current calendar year is highlighted. Filter by Employee to rate one person at a time.",
+        "Every person in one view. Only two years show at a time. Change the Year pair dropdown "
+        "to scroll every employee together. Type ratings on the Ratings sheet. No macros.",
+    ).font = font(10, italic=True, color=MUTED)
+    ws.row_dimensions[TITLE_ROW].height = 28
+
+    # Year-pair scroller (dropdown — works without VBA)
+    ws["A3"] = "Scroll years ▼"
+    ws["A3"].font = font(11, bold=True, color=WHITE)
+    ws["A3"].fill = fill(TEAL)
+    ws["A3"].alignment = align("center")
+    ws.merge_cells("B3:C3")
+    pair = ws["B3"]
+    pair.value = "2025 vs 2026"
+    style_input(pair)
+    pair.font = font(16, bold=True, color=NAVY)
+    ws["C3"].fill = fill(YELLOW)
+    ws["C3"].border = MED
+
+    ws["D3"] = "Earlier"
+    ws["E3"] = '=IFERROR(--LEFT($B$3,4),"")'
+    ws["F3"] = "Later"
+    ws["G3"] = '=IFERROR(--RIGHT($B$3,4),"")'
+    ws["D3"].font = font(10, bold=True, color=WHITE)
+    ws["D3"].fill = fill("5B8FB9")
+    ws["D3"].alignment = align("center")
+    ws["F3"].font = font(10, bold=True, color=WHITE)
+    ws["F3"].fill = fill(TEAL)
+    ws["F3"].alignment = align("center")
+    ws["E3"].font = font(18, bold=True, color=NAVY)
+    ws["E3"].fill = fill(LY_FILL)
+    ws["E3"].alignment = align("center")
+    ws["E3"].number_format = "0"
+    ws["E3"].border = MED
+    ws["G3"].font = font(18, bold=True, color=NAVY)
+    ws["G3"].fill = fill(TY_FILL)
+    ws["G3"].alignment = align("center")
+    ws["G3"].number_format = "0"
+    ws["G3"].border = MED
+
+    ws.merge_cells("H3:L3")
+    ws["H3"] = (
+        '=HYPERLINK("#\'Ratings\'!A1","Type 1–5 on Ratings →")'
+        '&"     Next pair: "&IFERROR(INDEX(YearPairList,MATCH($B$3,YearPairList,0)+1),"—")'
+        '&"     Previous pair: "&IFERROR(INDEX(YearPairList,MATCH($B$3,YearPairList,0)-1),"—")'
+    )
+    ws["H3"].font = font(11, color=MUTED)
+    ws["H3"].alignment = align("left")
+
+    add_defined_name(wb, "YearPair", f"{q(SHEET_MATRIX)}!$B$3")
+    add_defined_name(wb, "ViewEarlierYear", f"{q(SHEET_MATRIX)}!$E$3")
+    add_defined_name(wb, "ViewLaterYear", f"{q(SHEET_MATRIX)}!$G$3")
+
+    # Employee / department headers
+    ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=1, end_row=GLANCE_SUB_ROW, end_column=1)
+    ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=2, end_row=GLANCE_SUB_ROW, end_column=2)
+    for col, label in ((1, "Employee"), (2, "Department")):
+        cell = ws.cell(GLANCE_CAT_ROW, col, label)
+        cell.font = font(12, bold=True, color=WHITE)
+        cell.fill = fill(NAVY)
+        cell.alignment = align("center", wrap=True)
+        cell.border = THIN
+        for r in (GLANCE_SKILL_ROW, GLANCE_SUB_ROW):
+            ws.cell(r, col).fill = fill(NAVY)
+            ws.cell(r, col).border = THIN
+
+    ratings_end = MATRIX_DATA_END
+    emp_rng = f"{q(SHEET_RATINGS)}!$A$6:$A${ratings_end}"
+    skill_rng = f"{q(SHEET_RATINGS)}!$C$6:$C${ratings_end}"
+    year_hdr = f"{q(SHEET_RATINGS)}!$E$5:$T$5"
+    year_block = f"{q(SHEET_RATINGS)}!$E$6:$T${ratings_end}"
+
+    for n in range(1, NUM_SKILL_SLOTS + 1):
+        earlier_c, later_c, change_c = glance_skill_columns(n)
+        skills_row = 5 + n
+        ws.merge_cells(
+            start_row=GLANCE_CAT_ROW, start_column=earlier_c, end_row=GLANCE_CAT_ROW, end_column=change_c
+        )
+        cat = ws.cell(
+            GLANCE_CAT_ROW,
+            earlier_c,
+            f'=IF({q(SHEET_SKILLS)}!B{skills_row}="","",{q(SHEET_SKILLS)}!C{skills_row})',
+        )
+        cat.font = font(9, bold=True, color=WHITE)
+        cat.fill = fill(TEAL)
+        cat.alignment = align("center")
+        cat.border = THIN
+        for col in range(earlier_c, change_c + 1):
+            ws.cell(GLANCE_CAT_ROW, col).fill = fill(TEAL)
+            ws.cell(GLANCE_CAT_ROW, col).border = THIN
+
+        ws.merge_cells(
+            start_row=GLANCE_SKILL_ROW, start_column=earlier_c, end_row=GLANCE_SKILL_ROW, end_column=change_c
+        )
+        name = ws.cell(
+            GLANCE_SKILL_ROW,
+            earlier_c,
+            f'=IF({q(SHEET_SKILLS)}!B{skills_row}="","",{q(SHEET_SKILLS)}!B{skills_row})',
+        )
+        name.font = font(11, bold=True, color=NAVY)
+        name.fill = fill(PAPER)
+        name.alignment = align("center", wrap=True)
+        name.border = THIN
+        for col in range(earlier_c, change_c + 1):
+            ws.cell(GLANCE_SKILL_ROW, col).fill = fill(PAPER)
+            ws.cell(GLANCE_SKILL_ROW, col).border = THIN
+
+        skill_name_cell = f"{get_column_letter(earlier_c)}${GLANCE_SKILL_ROW}"
+        ly_h = ws.cell(GLANCE_SUB_ROW, earlier_c, "=ViewEarlierYear")
+        ty_h = ws.cell(GLANCE_SUB_ROW, later_c, "=ViewLaterYear")
+        ch_h = ws.cell(GLANCE_SUB_ROW, change_c, "Change")
+        ly_h.fill = fill("5B8FB9")
+        ty_h.fill = fill(TEAL)
+        ch_h.fill = fill("8A8178")
+        for cell in (ly_h, ty_h, ch_h):
+            cell.font = font(10, bold=True, color=WHITE)
+            cell.alignment = align("center")
+            cell.border = THIN
+            cell.number_format = "0"
+
+        ws.column_dimensions[get_column_letter(earlier_c)].width = 11
+        ws.column_dimensions[get_column_letter(later_c)].width = 11
+        ws.column_dimensions[get_column_letter(change_c)].width = 10
+
+        for i in range(NUM_EMPLOYEE_SLOTS):
+            r = GLANCE_START + i
+            emp_row = 6 + i
+            if n == 1:
+                ws.cell(r, 1, f'=IF({q(SHEET_EMP)}!B{emp_row}="","",{q(SHEET_EMP)}!B{emp_row})')
+                ws.cell(r, 2, f'=IF(A{r}="","",{q(SHEET_EMP)}!C{emp_row})')
+                ws.cell(r, 1).font = font(11, bold=True)
+                ws.cell(r, 2).font = font(10, color=MUTED)
+                ws.cell(r, 1).border = THIN
+                ws.cell(r, 2).border = THIN
+                ws.row_dimensions[r].height = 22
+
+            def pull(year_name: str) -> str:
+                return (
+                    f'=IF(OR($A{r}="",{skill_name_cell}="",{year_name}=""),"",'
+                    f"IFERROR(1/(1/SUMIFS("
+                    f"INDEX({year_block},0,MATCH({year_name},{year_hdr},0)),"
+                    f"{emp_rng},$A{r},{skill_rng},{skill_name_cell}"
+                    f'))),""))'
+                )
+
+            earlier_cell = ws.cell(r, earlier_c, pull("ViewEarlierYear"))
+            later_cell = ws.cell(r, later_c, pull("ViewLaterYear"))
+            change_cell = ws.cell(
+                r,
+                change_c,
+                f'=IF(OR({get_column_letter(earlier_c)}{r}="",{get_column_letter(later_c)}{r}=""),"",'
+                f"{get_column_letter(later_c)}{r}-{get_column_letter(earlier_c)}{r})",
+            )
+            earlier_cell.fill = fill(LY_FILL)
+            later_cell.fill = fill(TY_FILL)
+            change_cell.fill = fill(CHANGE_FILL)
+            for cell in (earlier_cell, later_cell, change_cell):
+                cell.alignment = align("center")
+                cell.border = THIN
+                cell.font = font(12, bold=True)
+            change_cell.font = font(11)
+            change_cell.number_format = "+0;-0;0"
+
+    for n in range(1, NUM_SKILL_SLOTS + 1):
+        earlier_c, later_c, change_c = glance_skill_columns(n)
+        apply_rating_cf(
+            ws,
+            f"{get_column_letter(earlier_c)}{GLANCE_START}:{get_column_letter(later_c)}{GLANCE_END}",
+        )
+        apply_change_cf(
+            ws,
+            f"{get_column_letter(change_c)}{GLANCE_START}:{get_column_letter(change_c)}{GLANCE_END}",
+        )
+
+    ws.column_dimensions["A"].width = 20
+    ws.column_dimensions["B"].width = 16
+    ws.row_dimensions[GLANCE_CAT_ROW].height = 18
+    ws.row_dimensions[GLANCE_SKILL_ROW].height = 32
+    ws.row_dimensions[GLANCE_SUB_ROW].height = 20
+    ws.row_dimensions[GLANCE_PAIR_ROW].height = 28
+    ws.freeze_panes = f"C{GLANCE_START}"
+    ws.sheet_view.showGridLines = False
+    ws.sheet_view.zoomScale = 90
+    ws.sheet_properties.tabColor = NAVY
+    apply_print(ws, landscape=True)
+    ws.print_title_rows = "1:6"
+    ws.print_title_cols = "A:B"
+
+
+# ===========================================================================
+# Ratings (all years — source of truth for data entry)
+# ===========================================================================
+def build_ratings(wb: Workbook) -> None:
+    ws = wb.create_sheet(SHEET_RATINGS)
+    last_col = SUMMARY_FIRST_COL + 4
+    add_navigation(ws, SHEET_RATINGS, last_col)
+
+    ws.merge_cells(start_row=TITLE_ROW, start_column=1, end_row=TITLE_ROW, end_column=8)
+    style_title(ws["A2"], "Ratings — all years")
+    ws.merge_cells(start_row=TITLE_ROW, start_column=9, end_row=TITLE_ROW, end_column=last_col)
+    ws.cell(
+        TITLE_ROW,
+        9,
+        "Type 1–5 here for any year. Skill Matrix is the two-year glance of the whole crew. "
+        "Pick a year pair there to scroll everyone at once — no macros.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
 
@@ -1042,7 +1260,7 @@ def build_matrix(wb: Workbook) -> None:
     ws.auto_filter.ref = f"A{MATRIX_HEADER_ROW}:{get_column_letter(last_col)}{MATRIX_DATA_END}"
     ws.sheet_view.showGridLines = False
     ws.sheet_view.zoomScale = 90
-    ws.sheet_properties.tabColor = NAVY
+    ws.sheet_properties.tabColor = "5B8FB9"
     apply_print(ws, landscape=True)
     ws.print_title_rows = "1:5"
     ws.print_title_cols = "A:D"
@@ -1067,18 +1285,18 @@ def build_data(wb: Workbook) -> None:
             for slot in range(NUM_YEAR_SLOTS):
                 ycol = get_column_letter(year_col(slot))
                 occupied = (
-                    f'AND({q(SHEET_MATRIX)}!A{mrow}<>"",{q(SHEET_MATRIX)}!{ycol}{MATRIX_HEADER_ROW}<>"")'
+                    f'AND({q(SHEET_RATINGS)}!A{mrow}<>"",{q(SHEET_RATINGS)}!{ycol}{MATRIX_HEADER_ROW}<>"")'
                 )
-                ws.cell(row, 1, f"=IF({occupied},{q(SHEET_MATRIX)}!A{mrow},\"\")")
+                ws.cell(row, 1, f"=IF({occupied},{q(SHEET_RATINGS)}!A{mrow},\"\")")
                 ws.cell(row, 2, f'=IF(A{row}="","",{q(SHEET_EMP)}!C{emp_row})')
                 ws.cell(row, 3, f'=IF(A{row}="","",{q(SHEET_EMP)}!D{emp_row})')
-                ws.cell(row, 4, f'=IF(A{row}="","",{q(SHEET_MATRIX)}!C{mrow})')
-                ws.cell(row, 5, f'=IF(A{row}="","",{q(SHEET_MATRIX)}!D{mrow})')
-                ws.cell(row, 6, f"=IF({occupied},{q(SHEET_MATRIX)}!{ycol}{MATRIX_HEADER_ROW},\"\")")
+                ws.cell(row, 4, f'=IF(A{row}="","",{q(SHEET_RATINGS)}!C{mrow})')
+                ws.cell(row, 5, f'=IF(A{row}="","",{q(SHEET_RATINGS)}!D{mrow})')
+                ws.cell(row, 6, f"=IF({occupied},{q(SHEET_RATINGS)}!{ycol}{MATRIX_HEADER_ROW},\"\")")
                 ws.cell(
                     row,
                     7,
-                    f"=IF(OR(A{row}=\"\",{q(SHEET_MATRIX)}!{ycol}{mrow}=\"\"),\"\",{q(SHEET_MATRIX)}!{ycol}{mrow})",
+                    f"=IF(OR(A{row}=\"\",{q(SHEET_RATINGS)}!{ycol}{mrow}=\"\"),\"\",{q(SHEET_RATINGS)}!{ycol}{mrow})",
                 )
                 ws.cell(row, 8, f'=IF(A{row}="","",{q(SHEET_EMP)}!F{emp_row})')
                 row += 1
@@ -1109,6 +1327,28 @@ def build_calc(wb: Workbook) -> None:
     add_defined_name(wb, "EmpFilter", f"{q(SHEET_DASH)}!$C$5")
     add_defined_name(wb, "SkillSetFilter", f"{q(SHEET_DASH)}!$F$5")
     add_defined_name(wb, "DeptFilter", f"{q(SHEET_DASH)}!$I$5")
+
+    # Consecutive year pairs for the Skill Matrix scroller (no VBA)
+    ws["G30"] = "YearPair"
+    for i in range(NUM_YEAR_SLOTS - 1):
+        r = 31 + i
+        ws.cell(
+            r,
+            7,
+            f'=IF(OR({q(SHEET_YEARS)}!B{8 + i}="",{q(SHEET_YEARS)}!B{9 + i}=""),"",'
+            f'{q(SHEET_YEARS)}!B{8 + i}&" vs "&{q(SHEET_YEARS)}!B{9 + i})',
+        )
+    pair_last = 31 + NUM_YEAR_SLOTS - 2
+    add_defined_name(
+        wb,
+        "YearPairList",
+        f"{q(SHEET_CALC)}!$G$31:INDEX({q(SHEET_CALC)}!$G$31:$G${pair_last},COUNTA({q(SHEET_CALC)}!$G$31:$G${pair_last}))",
+    )
+    pair_dv = DataValidation(type="list", formula1="=YearPairList", allow_blank=False)
+    pair_dv.promptTitle = "Year pair"
+    pair_dv.prompt = "Pick two years. Every employee on Skill Matrix updates together."
+    wb[SHEET_MATRIX].add_data_validation(pair_dv)
+    pair_dv.add("B3")
 
     # Team average by year (respects department filter)
     ws["A4"] = "Year"
@@ -1724,22 +1964,22 @@ def build_how_to(wb: Workbook) -> None:
 
     box(
         ws, 5, 1, 14, 6,
-        "1. Rate skills (1–5)",
-        "Open Skill Matrix. Each row is one person and one skill. "
-        "Each column is a year.\n\n"
-        "Type 1–5 in the year you are reviewing. The current calendar year is highlighted.\n\n"
-        "Use the Employee filter (arrow on the Employee header) to rate one person at a time.\n\n"
-        "First, Latest, vs last year, and Since joined calculate automatically.",
+        "1. Glance at the whole crew",
+        "Open Skill Matrix. Each row is one person. Each skill has two years and a Change column.\n\n"
+        "At the top, pick a Year pair (for example 2025 vs 2026). "
+        "That dropdown scrolls every employee to those two years at once. No macros.\n\n"
+        "Green change = improved. Red = declined.\n\n"
+        "Type 1–5 ratings on the Ratings sheet (any year). The glance view updates.",
         NAVY,
     )
     box(
         ws, 5, 7, 14, 12,
         "2. New year — automatic, or add one",
-        "Years 2023–2034 are already columns. When a new year starts, open Skill Matrix and rate that column. "
-        "You do not copy last year’s scores.\n\n"
-        "The Years sheet shows whether this calendar year is ready. Use Add / manage years on the Dashboard.\n\n"
-        "To add 2035 or later (or a missing older year): type it in the next yellow row on Years, oldest to newest. "
-        "A new column appears. Charts include a year as soon as it has ratings.",
+        "Years 2023–2034 are already on Ratings. When a new year starts, open Ratings and fill that column. "
+        "Then pick the new pair on Skill Matrix (for example 2026 vs 2027).\n\n"
+        "The Years sheet shows whether this calendar year is in the list. "
+        "To add 2035 or later: type it in the next yellow row on Years, oldest to newest. "
+        "A new column appears on Ratings, and a new pair appears in the dropdown.",
         TEAL,
     )
     box(
@@ -1804,6 +2044,7 @@ def main() -> None:
 
     build_how_to(wb)
     build_matrix(wb)
+    build_ratings(wb)
     wb.create_sheet(SHEET_CALC)
     build_dashboard(wb)
     build_employees(wb)
@@ -1818,6 +2059,7 @@ def main() -> None:
     order = [
         SHEET_HOW,
         SHEET_MATRIX,
+        SHEET_RATINGS,
         SHEET_DASH,
         SHEET_EMP,
         SHEET_SKILLS,
