@@ -113,85 +113,46 @@ PRESET_YEARS = list(range(2023, 2035))  # already waiting as columns
 # Sample data
 # ---------------------------------------------------------------------------
 EMPLOYEES = [
-    ("EMP-001", "Alex Rivera", "Vision", "Vision Switcher", "Riley Thompson", date(2022, 3, 12)),
-    ("EMP-002", "Jordan Chen", "Vision", "Camera Switcher", "Riley Thompson", date(2021, 6, 15)),
-    ("EMP-003", "Sam Patel", "Content", "Content Operator", "Riley Thompson", date(2023, 1, 10)),
-    ("EMP-004", "Taylor Brooks", "Systems", "Systems Technician", "Riley Thompson", date(2020, 9, 1)),
-    ("EMP-005", "Morgan Lee", "Systems", "Setup Technician", "Riley Thompson", date(2024, 2, 20)),
-    ("EMP-006", "Casey Nguyen", "Streaming", "Streaming Operator", "Riley Thompson", date(2022, 11, 4)),
-    ("EMP-007", "Riley Thompson", "Vision", "Vision Supervisor", "Dana Wright", date(2019, 4, 8)),
-    ("EMP-008", "Avery Kim", "Content", "Content Operator", "Riley Thompson", date(2024, 8, 18)),
+    ("EMP-001", "Alex Rivera", "Vision", date(2022, 3, 12)),
+    ("EMP-002", "Jordan Chen", "Vision", date(2021, 6, 15)),
+    ("EMP-003", "Sam Patel", "Vision", date(2023, 1, 10)),
+    ("EMP-004", "Taylor Brooks", "Lighting", date(2020, 9, 1)),
+    ("EMP-005", "Morgan Lee", "Staging", date(2024, 2, 20)),
+    ("EMP-006", "Casey Nguyen", "Sound", date(2022, 11, 4)),
+    ("EMP-007", "Riley Thompson", "Vision", date(2019, 4, 8)),
+    ("EMP-008", "Avery Kim", "Lighting", date(2024, 8, 18)),
 ]
 
 SKILLS = [
-    ("SK-001", "Barco Vision Switching", "Switching", "Operate Barco (or similar) processors and switch LED / IMAG / program during the show"),
-    ("SK-002", "Camera Switching", "Switching", "Cut cameras and direct the live picture"),
-    ("SK-003", "Content Operation", "Content", "Cue and play out show content — media servers, playback, and graphics"),
-    ("SK-004", "Systems Tech", "Systems", "Signal flow, routing, networking, and show systems"),
-    ("SK-005", "Technical Setup", "Systems", "Rig, patch, and line-check vision systems before doors"),
-    ("SK-006", "Live Streaming", "Streaming", "Encode, monitor, and deliver the live stream"),
-    ("SK-007", "Troubleshooting", "Support", "Diagnose and fix issues under show pressure"),
+    ("SK-001", "Broadcast Camera Operation", "Cameras", "Operate broadcast cameras on a live event"),
+    ("SK-002", "PTZ Cameras Operation", "Cameras", "Drive and frame PTZ cameras"),
+    ("SK-003", "Shading / CCU", "Cameras", "Match and shade cameras from a CCU / RCP"),
+    ("SK-004", "ATEM Vision Switching", "Switching", "Switch program on a Blackmagic ATEM"),
+    ("SK-005", "Barco Vision Switching", "Switching", "Operate Barco processors and LED / IMAG / program"),
+    ("SK-006", "Camera Switching", "Switching", "Cut cameras and direct the live picture"),
+    ("SK-007", "Content Operation", "Content", "Cue and play out show content, playback, and graphics"),
+    ("SK-008", "Systems Tech", "Systems", "Signal flow, routing, networking, and show systems"),
+    ("SK-009", "Technical Setup", "Systems", "Rig, patch, and line-check before doors"),
+    ("SK-010", "Live Streaming", "Streaming", "Encode, monitor, and deliver the live stream"),
 ]
 
-DEPARTMENTS = ["Vision", "Content", "Systems", "Streaming"]
-JOB_TITLES = [
-    "Vision Switcher",
-    "Camera Switcher",
-    "Content Operator",
-    "Systems Technician",
-    "Setup Technician",
-    "Streaming Operator",
-    "Vision Supervisor",
-]
+DEPARTMENTS = ["Vision", "Sound", "Lighting", "Staging"]
 
-# (2025, 2026) for: Barco, Camera, Content, Systems, Setup, Streaming, Troubleshooting
-BASE_2526 = [
-    [(4, 5), (3, 3), (2, 3), (3, 3), (3, 4), (2, 2), (3, 4)],
-    [(3, 3), (5, 5), (2, 3), (2, 3), (3, 3), (2, 2), (4, 4)],
-    [(2, 2), (2, 3), (4, 5), (2, 3), (3, 3), (4, 4), (3, 3)],
-    [(2, 3), (2, 2), (3, 3), (5, 5), (4, 5), (3, 3), (4, 5)],
-    [(1, 2), (1, 2), (2, 3), (3, 4), (4, 5), (2, 2), (3, 4)],
-    [(1, 2), (2, 2), (3, 4), (3, 3), (3, 3), (4, 5), (3, 4)],
-    [(4, 4), (4, 4), (3, 4), (4, 4), (4, 4), (3, 3), (5, 5)],
-    [(1, 2), (2, 2), (4, 5), (2, 3), (2, 3), (3, 4), (3, 3)],
-]
-
+# Each skillset is that skill at a competent (3) minimum. Add more on the Skill Sets sheet.
 SKILL_SETS = [
-    (
-        "Barco Vision Switching",
-        "Lead Barco / LED / program switching on a live event",
-        [("Barco Vision Switching", 4), ("Technical Setup", 3), ("Troubleshooting", 3)],
-    ),
-    (
-        "Camera Switching",
-        "Cut cameras and own the live picture",
-        [("Camera Switching", 4), ("Technical Setup", 3), ("Troubleshooting", 3)],
-    ),
-    (
-        "Content Operation",
-        "Cue and play out show content",
-        [("Content Operation", 4), ("Live Streaming", 3), ("Troubleshooting", 3)],
-    ),
-    (
-        "Systems Tech",
-        "Own signal flow, routing, and show systems",
-        [("Systems Tech", 4), ("Technical Setup", 4), ("Troubleshooting", 4)],
-    ),
-    (
-        "Technical Setup",
-        "Rig, patch, and line-check before doors",
-        [("Technical Setup", 4), ("Systems Tech", 3), ("Troubleshooting", 3)],
-    ),
-    (
-        "Live Streaming",
-        "Encode, monitor, and deliver the live stream",
-        [("Live Streaming", 4), ("Content Operation", 3), ("Troubleshooting", 3)],
-    ),
-    (
-        "Troubleshooting",
-        "Diagnose and fix issues under show pressure",
-        [("Troubleshooting", 4), ("Systems Tech", 3), ("Technical Setup", 3)],
-    ),
+    (name, desc, [(name, 3)]) for _sid, name, _cat, desc in SKILLS
+]
+
+# (2025, 2026) in SKILLS order
+BASE_2526 = [
+    [(3, 3), (2, 2), (2, 3), (3, 4), (4, 5), (3, 3), (2, 3), (3, 3), (3, 4), (2, 2)],
+    [(5, 5), (4, 4), (4, 5), (2, 3), (2, 2), (5, 5), (2, 3), (2, 3), (3, 3), (2, 2)],
+    [(2, 3), (2, 2), (2, 2), (4, 5), (2, 3), (3, 3), (4, 5), (2, 3), (3, 3), (4, 4)],
+    [(2, 2), (2, 2), (3, 3), (2, 3), (3, 3), (2, 2), (3, 3), (5, 5), (4, 5), (3, 3)],
+    [(1, 2), (1, 2), (1, 2), (1, 2), (1, 2), (1, 2), (2, 3), (3, 4), (4, 5), (2, 2)],
+    [(1, 2), (2, 2), (1, 2), (2, 2), (1, 2), (2, 2), (3, 3), (3, 3), (3, 3), (4, 5)],
+    [(4, 4), (3, 4), (4, 4), (4, 4), (4, 4), (4, 4), (3, 4), (4, 4), (4, 4), (3, 3)],
+    [(2, 2), (2, 2), (2, 2), (2, 3), (2, 2), (2, 2), (4, 5), (2, 3), (2, 3), (3, 4)],
 ]
 
 RATING_SCALE = [
@@ -284,7 +245,7 @@ def add_table(ws, name: str, ref: str) -> None:
 def rating_for(emp_i: int, skill_i: int, year: int):
     if emp_i >= len(BASE_2526) or skill_i >= len(BASE_2526[0]):
         return None
-    hire_year = EMPLOYEES[emp_i][5].year
+    hire_year = EMPLOYEES[emp_i][3].year
     if year < hire_year:
         return None
     y25, y26 = BASE_2526[emp_i][skill_i]
@@ -438,44 +399,36 @@ def build_settings(wb: Workbook) -> None:
 
 
 # ===========================================================================
-# Lists (departments & job titles)
+# Lists (departments)
 # ===========================================================================
 def build_lists(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_LISTS)
     add_navigation(ws, SHEET_LISTS, 8)
     ws.merge_cells("A2:H2")
-    style_title(ws["A2"], "Dropdown lists")
+    style_title(ws["A2"], "Departments")
     ws.merge_cells("A3:H3")
     ws["A3"] = (
-        "Add a department or job title in the next yellow row. "
-        "It appears in the Employees dropdowns automatically. "
-        "Add it here first, then choose it on the Employees sheet."
+        "Departments: Vision, Sound, Lighting, Staging. "
+        "Add another in the next yellow row, then choose it on Employees. "
+        "To add a skillset, use the Skill Sets sheet. To add a person, use Employees."
     )
     ws["A3"].font = font(11, color=MUTED, italic=True)
     ws["A3"].alignment = align("left", wrap=True)
     ws.row_dimensions[3].height = 36
 
     ws["A5"] = "Department"
-    ws["C5"] = "Job title"
     ws["A5"].font = font(11, bold=True, color=WHITE)
-    ws["C5"].font = font(11, bold=True, color=WHITE)
     ws["A5"].fill = fill(NAVY)
-    ws["C5"].fill = fill(NAVY)
     ws["A5"].alignment = align("center")
-    ws["C5"].alignment = align("center")
 
     for i in range(NUM_LIST_SLOTS):
         r = 6 + i
         dept = DEPARTMENTS[i] if i < len(DEPARTMENTS) else ""
-        title = JOB_TITLES[i] if i < len(JOB_TITLES) else ""
         dcell = ws.cell(r, 1, dept)
-        tcell = ws.cell(r, 3, title)
-        for cell in (dcell, tcell):
-            cell.font = font(11)
-            cell.border = THIN
-            if not cell.value:
-                cell.fill = fill(YELLOW)
-        ws.cell(r, 2).border = Border()
+        dcell.font = font(11)
+        dcell.border = THIN
+        if not dcell.value:
+            dcell.fill = fill(YELLOW)
 
     ws.cell(6 + len(DEPARTMENTS), 1).comment = Comment(
         "Type a new department here. It will appear in the Department dropdown on Employees.",
@@ -483,17 +436,9 @@ def build_lists(wb: Workbook) -> None:
         width=260,
         height=70,
     )
-    ws.cell(6 + len(JOB_TITLES), 3).comment = Comment(
-        "Type a new job title here. It will appear in the Job Title dropdown on Employees.",
-        "Skill Matrix",
-        width=260,
-        height=70,
-    )
 
     add_table(ws, "tblDepartments", f"A5:A{5 + NUM_LIST_SLOTS}")
-    add_table(ws, "tblJobTitles", f"C5:C{5 + NUM_LIST_SLOTS}")
 
-    # Filter lists that start with (All ...)
     ws["E5"] = "DeptFilter"
     ws["E6"] = "(All departments)"
     for i in range(NUM_LIST_SLOTS):
@@ -501,16 +446,10 @@ def build_lists(wb: Workbook) -> None:
     ws.column_dimensions["E"].hidden = True
 
     last_dept = 5 + NUM_LIST_SLOTS
-    last_title = 5 + NUM_LIST_SLOTS
     add_defined_name(
         wb,
         "DepartmentList",
         f"{q(SHEET_LISTS)}!$A$6:INDEX({q(SHEET_LISTS)}!$A$6:$A${last_dept},COUNTA({q(SHEET_LISTS)}!$A$6:$A${last_dept}))",
-    )
-    add_defined_name(
-        wb,
-        "JobTitleList",
-        f"{q(SHEET_LISTS)}!$C$6:INDEX({q(SHEET_LISTS)}!$C$6:$C${last_title},COUNTA({q(SHEET_LISTS)}!$C$6:$C${last_title}))",
     )
     add_defined_name(
         wb,
@@ -519,8 +458,6 @@ def build_lists(wb: Workbook) -> None:
     )
 
     ws.column_dimensions["A"].width = 28
-    ws.column_dimensions["B"].width = 4
-    ws.column_dimensions["C"].width = 28
     ws.freeze_panes = "A5"
     ws.sheet_properties.tabColor = "3D5A80"
     apply_print(ws, landscape=False)
@@ -553,8 +490,8 @@ def build_years(wb: Workbook) -> None:
     ws["A3"] = (
         '=IF(COUNTIF($B$8:$B$23,YEAR(TODAY()))>0,'
         '"Calendar year "&YEAR(TODAY())&" is already a column on Ratings. '
-        'Open Ratings and enter this year\'s 1-5 scores. Then on Skill Matrix pick a year pair '
-        '(for example "&YEAR(TODAY())-1&" vs "&YEAR(TODAY())&") to glance at the whole crew. '
+        'Open Ratings and enter this year\'s 1-5 scores. Then on Skill Matrix pick From year and To year '
+        '(any two years, for example 2023 and "&YEAR(TODAY())&") to glance at the whole crew. '
         'Next years through 2034 are already waiting.",'
         '"New calendar year "&YEAR(TODAY())&" is not in the list yet. Type "&YEAR(TODAY())'
         '&" in the next yellow row in the Year column, then rate people on the Skill Matrix.")'
@@ -579,8 +516,8 @@ def build_years(wb: Workbook) -> None:
     ws.merge_cells("A5:D6")
     ws["A5"] = (
         "To add a year beyond 2034 (or a missing historical year): type it in the next yellow row, "
-        "in order, oldest to newest. A new column appears on Ratings, and a new pair on Skill Matrix. "
-        "Do not use a formula for a year that already has ratings."
+        "in order, oldest to newest. A new column appears on Ratings, and the year is available "
+        "in the From / To dropdowns on Skill Matrix. Do not use a formula for a year that already has ratings."
     )
     ws["A5"].font = font(10, italic=True, color=MUTED)
     ws["A5"].alignment = align("left", wrap=True)
@@ -605,7 +542,7 @@ def build_years(wb: Workbook) -> None:
             cell = ws.cell(r, 2, year)
             cell.font = font(12, bold=True)
             ws.cell(r, 3, labels.get(year, "Ready for ratings"))
-            ws.cell(r, 4, "Column already on Skill Matrix")
+            ws.cell(r, 4, "Column already on Ratings")
         else:
             cell = ws.cell(r, 2, "")
             cell.fill = fill(YELLOW)
@@ -653,19 +590,20 @@ def build_years(wb: Workbook) -> None:
 # ===========================================================================
 def build_employees(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_EMP)
-    add_navigation(ws, SHEET_EMP, 7)
-    ws.merge_cells("A2:G2")
+    add_navigation(ws, SHEET_EMP, 5)
+    ws.merge_cells("A2:E2")
     style_title(ws["A2"], "Employees")
-    ws.merge_cells("A3:G3")
+    ws.merge_cells("A3:E3")
     ws["A3"] = (
-        "Add a person in the next yellow row. Department and Job title must be chosen from the dropdowns "
-        "(add new options on the Lists sheet first). Hire date is used for “since they joined” on the Dashboard."
+        "Add a person in the next yellow row: name, department (dropdown), hire date, status. "
+        "Department options are Vision, Sound, Lighting, Staging (add more on Lists first). "
+        "Hire date is used for since they joined on the Dashboard."
     )
     ws["A3"].font = font(11, color=MUTED, italic=True)
     ws["A3"].alignment = align("left", wrap=True)
-    ws.row_dimensions[3].height = 36
+    ws.row_dimensions[3].height = 40
 
-    headers = ["Employee ID", "Full Name", "Department", "Job Title", "Manager", "Hire Date", "Status"]
+    headers = ["Employee ID", "Full Name", "Department", "Hire Date", "Status"]
     for i, h in enumerate(headers, 1):
         c = ws.cell(5, i, h)
         c.font = font(11, bold=True, color=WHITE)
@@ -676,23 +614,23 @@ def build_employees(wb: Workbook) -> None:
         r = 6 + i
         emp_id = f"EMP-{i + 1:03d}"
         if i < len(EMPLOYEES):
-            _, name, dept, title, manager, hired = EMPLOYEES[i]
+            _, name, dept, hired = EMPLOYEES[i]
             status = "Active"
         else:
-            name = dept = title = manager = status = ""
+            name = dept = status = ""
             hired = None
-        values = [emp_id, name, dept, title, manager, hired, status]
+        values = [emp_id, name, dept, hired, status]
         for c, val in enumerate(values, 1):
             cell = ws.cell(r, c, val)
             cell.font = font(11)
             cell.border = THIN
             if i >= len(EMPLOYEES):
                 cell.fill = fill(YELLOW)
-        ws.cell(r, 6).number_format = "YYYY-MM-DD"
+        ws.cell(r, 4).number_format = "YYYY-MM-DD"
         ws.cell(r, 1).alignment = align("center")
 
     ws.cell(6 + len(EMPLOYEES), 2).comment = Comment(
-        "Type a new employee's name here, then pick Department and Job title from the dropdowns.",
+        "Type a new employee's name here, then pick Department from the dropdown.",
         "Skill Matrix",
         width=260,
         height=70,
@@ -706,22 +644,14 @@ def build_employees(wb: Workbook) -> None:
     ws.add_data_validation(dept_dv)
     dept_dv.add(f"C6:C{5 + NUM_EMPLOYEE_SLOTS}")
 
-    title_dv = DataValidation(type="list", formula1="=JobTitleList", allow_blank=True, showErrorMessage=True)
-    title_dv.errorTitle = "Job title not in list"
-    title_dv.error = "Add this job title on the Lists sheet first, then choose it here."
-    title_dv.promptTitle = "Job title"
-    title_dv.prompt = "Choose from the list. Add new titles on the Lists sheet."
-    ws.add_data_validation(title_dv)
-    title_dv.add(f"D6:D{5 + NUM_EMPLOYEE_SLOTS}")
-
-    add_table(ws, "tblEmployees", f"A5:G{5 + NUM_EMPLOYEE_SLOTS}")
+    add_table(ws, "tblEmployees", f"A5:E{5 + NUM_EMPLOYEE_SLOTS}")
     add_defined_name(
         wb,
         "EmployeeList",
         f"{q(SHEET_EMP)}!$B$6:INDEX({q(SHEET_EMP)}!$B$6:$B${5 + NUM_EMPLOYEE_SLOTS},COUNTA({q(SHEET_EMP)}!$B$6:$B${5 + NUM_EMPLOYEE_SLOTS}))",
     )
 
-    widths = [14, 22, 16, 22, 18, 14, 12]
+    widths = [14, 22, 16, 14, 12]
     for i, w in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A6"
@@ -736,11 +666,12 @@ def build_skills(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_SKILLS)
     add_navigation(ws, SHEET_SKILLS, 4)
     ws.merge_cells("A2:D2")
-    style_title(ws["A2"], "Skills catalog")
+    style_title(ws["A2"], "Skillsets")
     ws.merge_cells("A3:D3")
     ws["A3"] = (
-        "Add a skill in the next yellow row. Every employee gets a row for it on the Skill Matrix. "
-        "Then add it to a skill set on the Skill Sets sheet if you want to find who can do that job."
+        "These are the skillsets everyone is rated on. Add a skillset in the next yellow row. "
+        "Every employee gets a rating row for it. Also add the name on Skill Sets if you want "
+        "the Dashboard to rank who can do that job."
     )
     ws["A3"].font = font(11, color=MUTED, italic=True)
     ws["A3"].alignment = align("left", wrap=True)
@@ -770,13 +701,15 @@ def build_skills(wb: Workbook) -> None:
         ws.row_dimensions[r].height = 22
 
     ws.cell(6 + len(SKILLS), 2).comment = Comment(
-        "Type a new skill name here. It appears on the Skill Matrix for every employee.",
+        "Type a new skillset name here. It appears on the Skill Matrix for every employee.",
         "Skill Matrix",
         width=260,
         height=70,
     )
 
-    cat_dv = DataValidation(type="list", formula1='"Switching,Content,Systems,Streaming,Support"', allow_blank=True)
+    cat_dv = DataValidation(
+        type="list", formula1='"Cameras,Switching,Content,Systems,Streaming"', allow_blank=True
+    )
     cat_dv.prompt = "Optional grouping"
     cat_dv.promptTitle = "Category"
     ws.add_data_validation(cat_dv)
@@ -805,11 +738,12 @@ def build_skill_sets(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_SETS)
     add_navigation(ws, SHEET_SETS, 8)
     ws.merge_cells("A2:H2")
-    style_title(ws["A2"], "Skill sets (job profiles)")
+    style_title(ws["A2"], "Skill sets")
     ws.merge_cells("A3:H3")
     ws["A3"] = (
-        "A skill set is the mix of skills needed for a job. Add rows with the same set name and one skill per row. "
-        "On the Dashboard, pick a set to see who currently rates highest."
+        "Add a skillset here so the Dashboard can rank who can do that job. "
+        "Type a new name in the yellow Skill set name column, then add a row with that same name "
+        "and one skill (dropdown) per row. Sample skillsets match the ten vision skillsets."
     )
     ws["A3"].font = font(11, color=MUTED, italic=True)
     ws["A3"].alignment = align("left", wrap=True)
@@ -842,7 +776,7 @@ def build_skill_sets(wb: Workbook) -> None:
 
     first_empty = 6 + sum(len(s[2]) for s in SKILL_SETS)
     ws.cell(first_empty, 1).comment = Comment(
-        "Add another skill to a set (reuse the set name) or start a new set name here.",
+        "Type a new skillset name here, then add a matching row on the left (same name + a skill).",
         "Skill Matrix",
         width=260,
         height=70,
@@ -870,7 +804,7 @@ def build_skill_sets(wb: Workbook) -> None:
     for i, (name, desc, _skills) in enumerate(SKILL_SETS):
         ws.cell(6 + i, 5, name).border = THIN
         ws.cell(6 + i, 6, desc).border = THIN
-    name_slots = 16
+    name_slots = 24
     for i in range(len(SKILL_SETS), name_slots):
         ws.cell(6 + i, 5, "").fill = fill(YELLOW)
         ws.cell(6 + i, 6, "").fill = fill(YELLOW)
@@ -887,7 +821,7 @@ def build_skill_sets(wb: Workbook) -> None:
     ws.column_dimensions["B"].width = 28
     ws.column_dimensions["C"].width = 18
     ws.column_dimensions["D"].width = 4
-    ws.column_dimensions["E"].width = 22
+    ws.column_dimensions["E"].width = 32
     ws.column_dimensions["F"].width = 40
     ws.freeze_panes = "A6"
     ws.sheet_properties.tabColor = GOLD
@@ -908,60 +842,43 @@ def build_matrix(wb: Workbook) -> None:
     ws.cell(
         TITLE_ROW,
         9,
-        "Every person in one view. Only two years show at a time. Change the Year pair dropdown "
-        "to scroll every employee together. Type ratings on the Ratings sheet. No macros.",
+        "Every person in one view. Pick any two years (for example 2023 and 2026). "
+        "Type ratings on the Ratings sheet. No macros.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
 
-    # Year-pair scroller (dropdown — works without VBA)
-    ws["A3"] = "Scroll years ▼"
+    # From / To years (any two years — works without VBA)
+    ws["A3"] = "From year"
     ws["A3"].font = font(11, bold=True, color=WHITE)
-    ws["A3"].fill = fill(TEAL)
+    ws["A3"].fill = fill("5B8FB9")
     ws["A3"].alignment = align("center")
-    ws.merge_cells("B3:C3")
-    pair = ws["B3"]
-    pair.value = "2025 vs 2026"
-    style_input(pair)
-    pair.font = font(16, bold=True, color=NAVY)
-    ws["C3"].fill = fill(YELLOW)
-    ws["C3"].border = MED
+    from_year = ws["B3"]
+    from_year.value = 2023
+    style_input(from_year)
+    from_year.font = font(16, bold=True, color=NAVY)
+    from_year.number_format = "0"
 
-    ws["D3"] = "Earlier"
-    ws["E3"] = '=IFERROR(VALUE(LEFT($B$3,4)),"")'
-    ws["F3"] = "Later"
-    ws["G3"] = '=IFERROR(VALUE(RIGHT($B$3,4)),"")'
-    ws["D3"].font = font(10, bold=True, color=WHITE)
-    ws["D3"].fill = fill("5B8FB9")
-    ws["D3"].alignment = align("center")
-    ws["F3"].font = font(10, bold=True, color=WHITE)
-    ws["F3"].fill = fill(TEAL)
-    ws["F3"].alignment = align("center")
-    ws["E3"].font = font(18, bold=True, color=NAVY)
-    ws["E3"].fill = fill(LY_FILL)
-    ws["E3"].alignment = align("center")
-    ws["E3"].number_format = "0"
-    ws["E3"].border = MED
-    ws["G3"].font = font(18, bold=True, color=NAVY)
-    ws["G3"].fill = fill(TY_FILL)
-    ws["G3"].alignment = align("center")
-    ws["G3"].number_format = "0"
-    ws["G3"].border = MED
+    ws["C3"] = "To year"
+    ws["C3"].font = font(11, bold=True, color=WHITE)
+    ws["C3"].fill = fill(TEAL)
+    ws["C3"].alignment = align("center")
+    to_year = ws["D3"]
+    to_year.value = 2026
+    style_input(to_year)
+    to_year.font = font(16, bold=True, color=NAVY)
+    to_year.number_format = "0"
 
-    ws.merge_cells("H3:I3")
-    ws["H3"] = '=HYPERLINK("#\'Ratings\'!A1","Type 1-5 on Ratings")'
-    ws["H3"].font = font(11, bold=True, color=TEAL, underline="single")
-    ws["H3"].alignment = align("left")
-    ws.merge_cells("J3:L3")
-    ws["J3"] = (
-        '=IFERROR("Next: "&INDEX(YearPairList,MATCH($B$3,YearPairList,0)+1)&"   |   Previous: "&'
-        'INDEX(YearPairList,MATCH($B$3,YearPairList,0)-1),"")'
-    )
+    ws.merge_cells("E3:I3")
+    ws["E3"] = '=HYPERLINK("#\'Ratings\'!A1","Type 1-5 on Ratings")'
+    ws["E3"].font = font(11, bold=True, color=TEAL, underline="single")
+    ws["E3"].alignment = align("left")
+    ws.merge_cells("J3:N3")
+    ws["J3"] = "Pick any two years, including year 1 vs year 5. Both dropdowns use the Years list."
     ws["J3"].font = font(10, color=MUTED)
     ws["J3"].alignment = align("left")
 
-    add_defined_name(wb, "YearPair", f"{q(SHEET_MATRIX)}!$B$3")
-    add_defined_name(wb, "ViewEarlierYear", f"{q(SHEET_MATRIX)}!$E$3")
-    add_defined_name(wb, "ViewLaterYear", f"{q(SHEET_MATRIX)}!$G$3")
+    add_defined_name(wb, "ViewEarlierYear", f"{q(SHEET_MATRIX)}!$B$3")
+    add_defined_name(wb, "ViewLaterYear", f"{q(SHEET_MATRIX)}!$D$3")
 
     # Employee / department headers
     ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=1, end_row=GLANCE_SUB_ROW, end_column=1)
@@ -1105,8 +1022,8 @@ def build_ratings(wb: Workbook) -> None:
     ws.cell(
         TITLE_ROW,
         9,
-        "Type 1–5 here for any year. Skill Matrix is the two-year glance of the whole crew. "
-        "Pick a year pair there to scroll everyone at once — no macros.",
+        "Type 1-5 here for any year. Skill Matrix is the two-year glance of the whole crew. "
+        "Pick From year and To year there to compare any two years at once — no macros.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
 
@@ -1266,7 +1183,7 @@ def build_ratings(wb: Workbook) -> None:
 # ===========================================================================
 def build_data(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_DATA)
-    headers = ["Employee", "Department", "Job Title", "Skill", "Category", "Year", "Rating", "HireDate"]
+    headers = ["Employee", "Department", "Skill", "Category", "Year", "Rating", "HireDate"]
     for i, h in enumerate(headers, 1):
         c = ws.cell(1, i, h)
         c.font = font(11, bold=True, color=WHITE)
@@ -1284,26 +1201,25 @@ def build_data(wb: Workbook) -> None:
                 )
                 ws.cell(row, 1, f"=IF({occupied},{q(SHEET_RATINGS)}!A{mrow},\"\")")
                 ws.cell(row, 2, f'=IF(A{row}="","",{q(SHEET_EMP)}!C{emp_row})')
-                ws.cell(row, 3, f'=IF(A{row}="","",{q(SHEET_EMP)}!D{emp_row})')
-                ws.cell(row, 4, f'=IF(A{row}="","",{q(SHEET_RATINGS)}!C{mrow})')
-                ws.cell(row, 5, f'=IF(A{row}="","",{q(SHEET_RATINGS)}!D{mrow})')
-                ws.cell(row, 6, f"=IF({occupied},{q(SHEET_RATINGS)}!{ycol}{MATRIX_HEADER_ROW},\"\")")
+                ws.cell(row, 3, f'=IF(A{row}="","",{q(SHEET_RATINGS)}!C{mrow})')
+                ws.cell(row, 4, f'=IF(A{row}="","",{q(SHEET_RATINGS)}!D{mrow})')
+                ws.cell(row, 5, f"=IF({occupied},{q(SHEET_RATINGS)}!{ycol}{MATRIX_HEADER_ROW},\"\")")
                 ws.cell(
                     row,
-                    7,
+                    6,
                     f"=IF(OR(A{row}=\"\",{q(SHEET_RATINGS)}!{ycol}{mrow}=\"\"),\"\",{q(SHEET_RATINGS)}!{ycol}{mrow})",
                 )
-                ws.cell(row, 8, f'=IF(A{row}="","",{q(SHEET_EMP)}!F{emp_row})')
+                ws.cell(row, 7, f'=IF(A{row}="","",{q(SHEET_EMP)}!D{emp_row})')
                 row += 1
 
     last = row - 1
     add_defined_name(wb, "DataEmployee", f"{q(SHEET_DATA)}!$A$2:$A${last}")
     add_defined_name(wb, "DataDept", f"{q(SHEET_DATA)}!$B$2:$B${last}")
-    add_defined_name(wb, "DataSkill", f"{q(SHEET_DATA)}!$D$2:$D${last}")
-    add_defined_name(wb, "DataYear", f"{q(SHEET_DATA)}!$F$2:$F${last}")
-    add_defined_name(wb, "DataRating", f"{q(SHEET_DATA)}!$G$2:$G${last}")
+    add_defined_name(wb, "DataSkill", f"{q(SHEET_DATA)}!$C$2:$C${last}")
+    add_defined_name(wb, "DataYear", f"{q(SHEET_DATA)}!$E$2:$E${last}")
+    add_defined_name(wb, "DataRating", f"{q(SHEET_DATA)}!$F$2:$F${last}")
     ws.sheet_state = "hidden"
-    for i, w in enumerate([20, 14, 20, 22, 14, 10, 10, 12], 1):
+    for i, w in enumerate([20, 14, 22, 14, 10, 10, 12], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
 
@@ -1323,27 +1239,13 @@ def build_calc(wb: Workbook) -> None:
     add_defined_name(wb, "SkillSetFilter", f"{q(SHEET_DASH)}!$F$5")
     add_defined_name(wb, "DeptFilter", f"{q(SHEET_DASH)}!$I$5")
 
-    # Consecutive year pairs for the Skill Matrix scroller (no VBA)
-    ws["G30"] = "YearPair"
-    for i in range(NUM_YEAR_SLOTS - 1):
-        r = 31 + i
-        ws.cell(
-            r,
-            7,
-            f'=IF(OR({q(SHEET_YEARS)}!B{8 + i}="",{q(SHEET_YEARS)}!B{9 + i}=""),"",'
-            f'{q(SHEET_YEARS)}!B{8 + i}&" vs "&{q(SHEET_YEARS)}!B{9 + i})',
-        )
-    pair_last = 31 + NUM_YEAR_SLOTS - 2
-    add_defined_name(
-        wb,
-        "YearPairList",
-        f"{q(SHEET_CALC)}!$G$31:INDEX({q(SHEET_CALC)}!$G$31:$G${pair_last},COUNTA({q(SHEET_CALC)}!$G$31:$G${pair_last}))",
-    )
-    pair_dv = DataValidation(type="list", formula1="=YearPairList", allow_blank=False)
-    pair_dv.promptTitle = "Year pair"
-    pair_dv.prompt = "Pick two years. Every employee on Skill Matrix updates together."
-    wb[SHEET_MATRIX].add_data_validation(pair_dv)
-    pair_dv.add("B3")
+    # From / To year dropdowns on Skill Matrix (any two years, no VBA)
+    year_dv = DataValidation(type="list", formula1="=YearList", allow_blank=False)
+    year_dv.promptTitle = "Year"
+    year_dv.prompt = "Pick any year. Use From and To to compare year 1 vs year 5, or any other pair."
+    wb[SHEET_MATRIX].add_data_validation(year_dv)
+    year_dv.add("B3")
+    year_dv.add("D3")
 
     # Team average by year (respects department filter)
     ws["A4"] = "Year"
@@ -1525,27 +1427,27 @@ def build_dashboard(wb: Workbook) -> None:
     style_title(ws["A2"], "Dashboard — year on year")
     ws.merge_cells("A3:R3")
     ws["A3"] = (
-        '="Team view, one person, or a job profile. Latest year with ratings: "&IF(LatestYear="","-",LatestYear)'
+        '="Team view, one person, or a skillset. Latest year with ratings: "&IF(LatestYear="","-",LatestYear)'
         '&"  |  Previous: "&IF(PreviousYear="","-",PreviousYear)&"  |  Calendar: "&CalendarYear'
     )
     ws["A3"].font = font(11, italic=True, color=MUTED)
 
     # ----- Filter bar -----
     ws.merge_cells("A4:R4")
-    ws["A4"] = "Filters — pick an employee to explore their history, a skill set to see who can do that job, and a department to focus the team charts."
+    ws["A4"] = "Filters — pick an employee, a skillset to see who can do that job, and a department for the team charts."
     ws["A4"].font = font(10, italic=True, color=WHITE)
     ws["A4"].fill = fill(NAVY)
     for c in range(1, 19):
         ws.cell(4, c).fill = fill(NAVY)
 
     ws["A5"] = "Employee"
-    ws["B5"] = "→"
+    ws["B5"] = ">"
     ws["C5"] = EMPLOYEES[0][1]
-    ws["D5"] = "Skill set"
-    ws["E5"] = "→"
+    ws["D5"] = "Skillset"
+    ws["E5"] = ">"
     ws["F5"] = SKILL_SETS[0][0]
     ws["G5"] = "Department"
-    ws["H5"] = "→"
+    ws["H5"] = ">"
     ws["I5"] = "(All departments)"
     ws["K5"] = '=HYPERLINK("#\'Years\'!A1","Add / manage years")'
     ws["K5"].font = font(11, bold=True, color=WHITE, underline="single")
@@ -1571,8 +1473,8 @@ def build_dashboard(wb: Workbook) -> None:
     emp_dv.add("C5")
 
     set_dv = DataValidation(type="list", formula1="=SkillSetList", allow_blank=False)
-    set_dv.promptTitle = "Skill set"
-    set_dv.prompt = "Choose a job profile to rank who can do it"
+    set_dv.promptTitle = "Skillset"
+    set_dv.prompt = "Choose a skillset to rank who can do it. Add more on the Skill Sets sheet."
     ws.add_data_validation(set_dv)
     set_dv.add("F5")
 
@@ -1717,8 +1619,7 @@ def build_dashboard(wb: Workbook) -> None:
     ws["A25"] = (
         '=IF(EmpFilter="","",'
         '"Department: "&IFERROR(INDEX(Employees!C6:C21,MATCH(EmpFilter,Employees!B6:B21,0)),"-")'
-        '&"   |   Title: "&IFERROR(INDEX(Employees!D6:D21,MATCH(EmpFilter,Employees!B6:B21,0)),"-")'
-        '&"   |   Hired: "&TEXT(IFERROR(INDEX(Employees!F6:F21,MATCH(EmpFilter,Employees!B6:B21,0)),""),"YYYY-MM-DD")'
+        '&"   |   Hired: "&TEXT(IFERROR(INDEX(Employees!D6:D21,MATCH(EmpFilter,Employees!B6:B21,0)),""),"YYYY-MM-DD")'
         '&"   |   First ratings: "&IFERROR(MINIFS(DataYear,DataEmployee,EmpFilter,DataRating,">=1"),"-")'
         '&"   |   Latest: "&LatestYear)'
     )
@@ -1847,7 +1748,7 @@ def build_dashboard(wb: Workbook) -> None:
     )
     ws["A51"].font = font(11, color=MUTED)
 
-    headers = ["Rank", "Employee", "Department", "Job title", "Latest avg", "vs last year", "Skills rated", "At / above min"]
+    headers = ["Rank", "Employee", "Department", "Latest avg", "vs last year", "Skills rated", "At / above min"]
     for i, h in enumerate(headers, 1):
         c = ws.cell(52, i, h)
         c.font = font(10, bold=True, color=WHITE)
@@ -1865,36 +1766,31 @@ def build_dashboard(wb: Workbook) -> None:
             3,
             f'=IF(B{r}="","",IFERROR(INDEX(Employees!C6:C21,MATCH(B{r},Employees!B6:B21,0)),""))',
         )
+        ws.cell(r, 4, f"=IF(B{r}=\"\",\"\",Calc!T{8 + i})")
         ws.cell(
             r,
-            4,
-            f'=IF(B{r}="","",IFERROR(INDEX(Employees!D6:D21,MATCH(B{r},Employees!B6:B21,0)),""))',
-        )
-        ws.cell(r, 5, f"=IF(B{r}=\"\",\"\",Calc!T{8 + i})")
-        ws.cell(
-            r,
-            6,
+            5,
             f'=IF(B{r}="","",IFERROR(INDEX(Calc!N8:N23,MATCH(B{r},Calc!L8:L23,0)),""))',
         )
         ws.cell(
             r,
-            7,
+            6,
             f'=IF(B{r}="","",IFERROR(INDEX(Calc!O8:O23,MATCH(B{r},Calc!L8:L23,0)),""))',
         )
         ws.cell(
             r,
-            8,
+            7,
             f'=IF(B{r}="","",IFERROR(INDEX(Calc!P8:P23,MATCH(B{r},Calc!L8:L23,0)),""))',
         )
-        for c in range(1, 9):
+        for c in range(1, 8):
             ws.cell(r, c).border = THIN
-            ws.cell(r, c).alignment = align("center" if c != 2 and c != 4 else "left")
-        ws.cell(r, 5).number_format = "0.00"
-        ws.cell(r, 6).number_format = "+0.00;-0.00;0.00"
+            ws.cell(r, c).alignment = align("center" if c != 2 else "left")
+        ws.cell(r, 4).number_format = "0.00"
+        ws.cell(r, 5).number_format = "+0.00;-0.00;0.00"
         ws.cell(r, 2).font = font(11, bold=True)
-    apply_change_cf(ws, f"F53:F{52 + NUM_EMPLOYEE_SLOTS}")
+    apply_change_cf(ws, f"E53:E{52 + NUM_EMPLOYEE_SLOTS}")
     ws.conditional_formatting.add(
-        "A53:H53",
+        "A53:G53",
         FormulaRule(formula=["$B53<>\"\""], fill=fill("D4EDDA"), font=font(11, bold=True)),
     )
 
@@ -1917,9 +1813,9 @@ def build_dashboard(wb: Workbook) -> None:
 
     ws.merge_cells("A70:R71")
     ws["A70"] = (
-        "Tip: change Employee, Skill set, or Department in the yellow filter cells at the top — "
-        "charts and tables update together. Add a year on the Years sheet (or just wait; 2023–2034 are already columns). "
-        "Add departments and job titles on Lists, then pick them on Employees."
+        "Tip: change Employee, Skillset, or Department in the yellow filter cells at the top. "
+        "Add a person on Employees (next yellow row). Add a skillset on Skills and Skill Sets. "
+        "Add a year on Years (2023-2034 are already columns). Departments: Vision, Sound, Lighting, Staging."
     )
     ws["A70"].font = font(10, italic=True, color=MUTED)
     ws["A70"].alignment = align("left", wrap=True)
@@ -1981,40 +1877,41 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 5, 1, 14, 6,
         "1. Glance at the whole crew",
-        "Open Skill Matrix. Each row is one person. Each skill has two years and a Change column.\n\n"
-        "At the top, pick a Year pair (for example 2025 vs 2026). "
-        "That dropdown scrolls every employee to those two years at once. No macros.\n\n"
+        "Open Skill Matrix. Each row is one person. Each skillset has two years and a Change column.\n\n"
+        "At the top, pick From year and To year (for example 2023 and 2026). "
+        "You can compare year 1 to year 5, or any other pair. No macros.\n\n"
         "Green change = improved. Red = declined.\n\n"
-        "Type 1–5 ratings on the Ratings sheet (any year). The glance view updates.",
+        "Type 1-5 ratings on the Ratings sheet (any year). The glance view updates.",
         NAVY,
     )
     box(
         ws, 5, 7, 14, 12,
         "2. New year — automatic, or add one",
-        "Years 2023–2034 are already on Ratings. When a new year starts, open Ratings and fill that column. "
-        "Then pick the new pair on Skill Matrix (for example 2026 vs 2027).\n\n"
+        "Years 2023-2034 are already on Ratings. When a new year starts, open Ratings and fill that column. "
+        "Then pick From and To on Skill Matrix (for example 2023 and 2027).\n\n"
         "The Years sheet shows whether this calendar year is in the list. "
         "To add 2035 or later: type it in the next yellow row on Years, oldest to newest. "
-        "A new column appears on Ratings, and a new pair appears in the dropdown.",
+        "A new column appears on Ratings, and the year is in the From / To dropdowns.",
         TEAL,
     )
     box(
         ws, 16, 1, 24, 6,
-        "3. Add people, skills, departments, titles",
-        "Employees — next yellow row. Pick Department and Job title from the dropdowns. Fill Hire date for “since they joined”.\n\n"
-        "Skills — next yellow row. Every person gets a row for the new skill.\n\n"
-        "Lists — add a department or job title in a yellow row. It shows up in the dropdowns. Add it here first, then choose it on Employees.",
+        "3. Add people and skillsets",
+        "Employees — next yellow row. Type the name, pick Department (Vision, Sound, Lighting, Staging), fill Hire date.\n\n"
+        "Skillsets — next yellow row on Skills. Every person gets a rating row for the new skillset.\n\n"
+        "Skill Sets — add the name in the yellow Skill set name column, then a matching row (same name + skill) so Dashboard can rank who can do that job.\n\n"
+        "Lists — departments only. Add another department in a yellow row, then choose it on Employees.",
         "3D5A80",
     )
     box(
         ws, 16, 7, 24, 12,
         "4. Dashboard filters",
-        "Employee — that person’s skills, last year vs latest, and since they joined (first recorded rating).\n\n"
-        "Skill set — ranks who currently looks strongest for that seat "
-        "(Barco Vision Switching, Camera Switching, Content Operation, Systems Tech, "
-        "Technical Setup, Live Streaming, or Troubleshooting).\n\n"
-        "Department — Vision, Content, Systems, Streaming, or All departments.\n\n"
-        "Line charts show year on year on year, not just two years.",
+        "Employee — that person's skillsets, last year vs latest, and since they joined.\n\n"
+        "Skillset — ranks who currently looks strongest for that seat "
+        "(Broadcast Camera Operation, PTZ, Shading / CCU, ATEM, Barco, Camera Switching, "
+        "Content Operation, Systems Tech, Technical Setup, Live Streaming). Add more on Skill Sets.\n\n"
+        "Department — Vision, Sound, Lighting, Staging, or All departments.\n\n"
+        "Line charts show year on year, not just two years.",
         GOLD,
     )
 
@@ -2040,7 +1937,7 @@ def build_how_to(wb: Workbook) -> None:
 
     ws.merge_cells("A31:L32")
     ws["A31"] = (
-        "Microsoft 365 / Excel 2021+ is recommended (FILTER, MAXIFS, TEXTJOIN). "
+        "Microsoft 365 / Excel 2021+ is recommended (MAXIFS, SUMIFS, LOOKUP). "
         "A hidden Data/Calc pair powers the dashboard — you do not need to edit those sheets."
     )
     ws["A31"].font = font(10, italic=True, color=MUTED)
@@ -2092,8 +1989,8 @@ def main() -> None:
     wb.properties.title = "Employee Skill Matrix"
     wb.properties.creator = "Skill Matrix"
     wb.properties.description = (
-        "Rate skills 1–5 across multiple years, add years/skills/people later, "
-        "and explore a person or a job profile on the dashboard."
+        "Rate skillsets 1-5 across multiple years, add people and skillsets later, "
+        "and compare any two years on the crew matrix."
     )
 
     path = "Employee_Skill_Matrix.xlsx"
