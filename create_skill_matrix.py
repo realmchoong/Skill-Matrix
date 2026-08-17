@@ -1634,6 +1634,7 @@ def build_how_to(wb: Workbook) -> None:
     ws.merge_cells("A3:L3")
     ws["A3"] = (
         "Skill Matrix is this year's grid. On Dashboard, start with Look at: Team, Skillsets, or Individual. "
+        "You only need Excel — do not install Python. "
         "Insert a company logo once in the yellow top-left box: Insert > Pictures > Place in Cell. "
         "If it floats over the cells, right-click the picture and choose Place in Cell. "
         "It then appears on every tab. Or paste a logo https link on Settings (Logo URL)."
@@ -1667,7 +1668,7 @@ def build_how_to(wb: Workbook) -> None:
         "Employees — next yellow row. Type the name, pick Department (Vision, Sound, Lighting, Staging), fill Hire date. Yellow goes away when you type.\n\n"
         "Skillsets — next yellow row on Skills. Every person gets a rating row, and Dashboard can rank who is strongest on it.\n\n"
         "Lists — departments only.\n\n"
-        "Keep using this file as you add people and scores. A newly generated workbook would not include them unless you copy the data across (see README).",
+        "Keep using this Excel file as you add people and scores. You do not need Python."
         "3D5A80",
     )
     box(
@@ -1702,6 +1703,7 @@ def build_how_to(wb: Workbook) -> None:
     ws.merge_cells("A31:L32")
     ws["A31"] = (
         "Microsoft 365 / Excel 2021+ is recommended (MAXIFS, SUMIFS, LOOKUP). "
+        "No Python and no macros. "
         "Ratings is hidden (Unhide from a sheet tab). Data/Calc stay hidden — do not edit those."
     )
     ws["A31"].font = font(10, italic=True, color=MUTED)

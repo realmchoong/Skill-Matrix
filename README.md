@@ -2,7 +2,13 @@
 
 An Excel workbook for a **live-event vision operating team**. Rate people from **1 (beginner) to 5 (expert)**. **Skill Matrix** is this year’s crew grid. **Dashboard** starts with **Look at**: Team, Skillsets, or Individual.
 
-Open **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)** in Microsoft 365 / Excel 2021 or later. Sample people and scores (2023–2026) are included. There are **no macros**.
+**You only need Excel.** Do not install Python. There are **no macros**.
+
+1. Download **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)**.
+2. Open it in **Microsoft 365** or **Excel 2021** or later.
+3. Add people, skillsets, and scores in the sheets below. Keep using this same file.
+
+Sample people and scores (2023–2026) are included. You can overwrite them.
 
 ## Dashboard
 
@@ -47,11 +53,13 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 3. Open **Skill Matrix** for this year’s crew grid.
 4. Open **Dashboard**, choose **Look at**, then From / To years.
 
-## Rebuild or upgrade the file
+## Rebuild the file (optional)
 
-`python3 create_skill_matrix.py` **replaces** `Employee_Skill_Matrix.xlsx` with a new sample workbook. Scores you typed would not be in that new file.
+Python is **not required** to use the workbook. It is only for people who maintain this repository and need to rebuild the `.xlsx` from the generator scripts.
 
 You do **not** need a new file to add people or skillsets — use the yellow rows on **Employees** and **Skills** (the fill disappears when you type), and type 1–5 on **Ratings**.
+
+`python3 create_skill_matrix.py` **replaces** `Employee_Skill_Matrix.xlsx` with a new sample workbook. Scores you typed would not be in that new file.
 
 When you want a newer layout (Dashboard, logo box, extra skillsets, and so on) **and** you already have real data:
 
