@@ -16,7 +16,9 @@ Start with **Look at**, then **From year** and **To year**:
 
 The yellow **Skillset** dropdown is always there. It is used when Look at is **Skillsets**.
 
-The company logo lives on **How to Use** only. Insert → Pictures → **Place in Cell** in the top-left box. The other tabs show that same picture. Do not choose Place over Cells, or the other tabs will not update.
+The company logo is inserted **once**. On **How to Use**, click the yellow top-left box, then **Insert → Pictures → Place in Cell**. If the picture sits on top of the grid, right-click it → **Place in Cell**. The other tabs show that same cell.
+
+Alternatively, paste a **https** logo link in **Settings → Logo URL** (OneDrive or the web). That also appears on every tab.
 
 ## Skillsets
 

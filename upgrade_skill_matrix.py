@@ -16,6 +16,7 @@ from create_skill_matrix import (
     NUM_LIST_SLOTS,
     NUM_SKILL_SLOTS,
     NUM_YEAR_SLOTS,
+    NAV_SHEETS,
     SHEET_HOW,
     SHEET_DASH,
     SHEET_EMP,
@@ -278,10 +279,12 @@ def _read_settings(src: Workbook) -> dict:
     ws = src[SHEET_SETTINGS]
     out = {}
     for row in range(1, 20):
-        if _norm(ws.cell(row, 1).value) == "Target rating":
-            value = ws.cell(row, 2).value
-            if isinstance(value, (int, float)) and not _is_formula(value):
-                out["target"] = int(value)
+        label = _norm(ws.cell(row, 1).value)
+        value = ws.cell(row, 2).value
+        if label == "Target rating" and isinstance(value, (int, float)) and not _is_formula(value):
+            out["target"] = int(value)
+        if label == "Logo URL" and _norm(value) and not _is_formula(value):
+            out["logo_url"] = _norm(value)
     return out
 
 
@@ -411,13 +414,15 @@ def _write_ratings(
 
 
 def _write_settings(dest: Workbook, settings: dict) -> None:
-    if "target" not in settings or SHEET_SETTINGS not in dest.sheetnames:
+    if SHEET_SETTINGS not in dest.sheetnames:
         return
     ws = dest[SHEET_SETTINGS]
     for row in range(1, 20):
-        if _norm(ws.cell(row, 1).value) == "Target rating":
+        label = _norm(ws.cell(row, 1).value)
+        if label == "Target rating" and "target" in settings:
             ws.cell(row, 2).value = settings["target"]
-            return
+        if label == "Logo URL" and "logo_url" in settings:
+            ws.cell(row, 2).value = settings["logo_url"]
 
 
 def _write_dashboard(dest: Workbook, dashboard: dict) -> None:
@@ -438,23 +443,25 @@ def _write_dashboard(dest: Workbook, dashboard: dict) -> None:
 
 
 def embed_pending_images(dest: Workbook, tmp_dir: str | Path) -> int:
-    """Write copied pictures onto How to Use only. Other tabs link to that cell."""
+    """Stamp a copied logo onto every tab so a floating picture still appears everywhere."""
     jobs = getattr(dest, "_pending_images", None) or []
-    tmp_path = Path(tmp_dir)
+    dest._pending_images = []
+    if not jobs:
+        return 0
+    blob = jobs[0][1]
+    suffix = ".jpg" if blob[:2] == b"\xff\xd8" else ".png"
+    path = Path(tmp_dir) / f"logo{suffix}"
+    path.write_bytes(blob)
     copied = 0
-    for sheet_name, blob, _anchor in jobs:
-        if sheet_name not in dest.sheetnames:
+    for name in NAV_SHEETS:
+        if name not in dest.sheetnames:
             continue
-        suffix = ".jpg" if blob[:2] == b"\xff\xd8" else ".png"
-        path = tmp_path / f"{sheet_name}-{copied}{suffix}"
-        path.write_bytes(blob)
         new_img = XLImage(str(path))
         new_img.anchor = "A1"
-        dest[sheet_name].add_image(new_img)
+        dest[name].add_image(new_img)
         copied += 1
-    dest._pending_images = []
     if copied:
-        print(f"Copied {copied} logo / picture(s) onto How to Use")
+        print(f"Copied the logo onto {copied} tabs")
     return copied
 
 

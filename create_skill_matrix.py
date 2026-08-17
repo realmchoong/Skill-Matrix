@@ -198,23 +198,27 @@ def add_defined_name(wb: Workbook, name: str, ref: str) -> None:
 
 
 def add_logo_box(ws, source: bool = False) -> None:
-    """Top-left logo. Insert once on How to Use; other sheets show that same cell."""
+    """Top-left logo. Insert once on How to Use (Place in Cell) or set Logo URL on Settings."""
     ws.merge_cells("A1:B2")
     cell = ws["A1"]
     if source:
-        cell.value = "Company logo"
+        cell.value = '=IF(LogoURL="","",IFERROR(IMAGE(LogoURL,"Company logo",0),""))'
         cell.comment = Comment(
-            "Insert the logo once here: Insert > Pictures > Place in Cell. "
-            "It then appears in this box on every other tab. "
-            "Do not use Place over Cells, or the other tabs will stay blank.",
+            "To show the logo on every tab: click this box, Insert > Pictures > Place in Cell. "
+            "If the picture floats on top of the cells, right-click it and choose Place in Cell. "
+            "Or paste a https logo link in Settings (Logo URL).",
             "Skill Matrix",
-            width=280,
-            height=110,
+            width=300,
+            height=120,
         )
     else:
-        cell.value = f"={q(SHEET_HOW)}!A1"
+        cell.value = (
+            f'=IF(LogoURL<>"",IFERROR(IMAGE(LogoURL,"Company logo",0),""),'
+            f"IF({q(SHEET_HOW)}!A1=\"\",\"\",{q(SHEET_HOW)}!A1))"
+        )
         cell.comment = Comment(
-            "Linked from How to Use. Insert the logo there with Insert > Pictures > Place in Cell.",
+            "This is the How to Use logo. Insert the picture there with Place in Cell, "
+            "or set Logo URL on Settings.",
             "Skill Matrix",
             width=260,
             height=80,
@@ -230,8 +234,8 @@ def add_logo_box(ws, source: bool = False) -> None:
     for r in (1, 2):
         for c in (1, 2):
             ws.cell(r, c).border = logo_border
-            ws.cell(r, c).fill = fill(PAPER)
-    ws.row_dimensions[1].height = 40
+            ws.cell(r, c).fill = fill(YELLOW if source else PAPER)
+    ws.row_dimensions[1].height = 48
     ws.row_dimensions[2].height = 28
 
 
@@ -251,7 +255,7 @@ def add_navigation(ws, active: str, last_col: int) -> None:
     nav_end = NAV_START_COL + len(NAV_SHEETS) - 1
     for col in range(nav_end + 1, last_col + 1):
         ws.cell(NAV_ROW, col).fill = fill(NAVY)
-    ws.row_dimensions[NAV_ROW].height = 40
+    ws.row_dimensions[NAV_ROW].height = 48
 
 
 def style_title(cell, text: str, size: int = 22) -> None:
@@ -384,8 +388,19 @@ def build_settings(wb: Workbook) -> None:
     ws["A6"].font = font(11, bold=True)
     ws["A6"].fill = fill(PAPER)
     ws["A6"].border = THIN
-    ws["C6"].font = font(11, color=MUTED)
-    ws.merge_cells("C6:H6")
+    ws["A7"] = "Logo URL"
+    ws["B7"] = ""
+    style_input(ws["B7"])
+    ws["A7"].font = font(11, bold=True)
+    ws["A7"].fill = fill(PAPER)
+    ws["A7"].border = THIN
+    ws.merge_cells("C7:H7")
+    ws["C7"] = (
+        "Optional https link to the logo (OneDrive or the web). It appears on every tab. "
+        "Otherwise insert the picture on How to Use with Place in Cell."
+    )
+    ws["C7"].font = font(11, color=MUTED)
+    ws["C7"].alignment = align("left", wrap=True)
 
     ws["A8"] = "Read-only (calculated)"
     ws["A8"].font = font(14, bold=True, color=NAVY)
@@ -429,6 +444,7 @@ def build_settings(wb: Workbook) -> None:
         ws.row_dimensions[r].height = 28
 
     add_defined_name(wb, "TargetRating", f"{q(SHEET_SETTINGS)}!$B$6")
+    add_defined_name(wb, "LogoURL", f"{q(SHEET_SETTINGS)}!$B$7")
     add_defined_name(wb, "CalendarYear", f"{q(SHEET_SETTINGS)}!$B$9")
 
     ws.column_dimensions["A"].width = 28
@@ -1605,8 +1621,9 @@ def build_how_to(wb: Workbook) -> None:
     ws.merge_cells("A3:L3")
     ws["A3"] = (
         "Skill Matrix is this year's grid. On Dashboard, start with Look at: Team, Skillsets, or Individual. "
-        "Insert a company logo once in the top-left box (Insert > Pictures > Place in Cell). "
-        "It appears on every tab. Ratings is hidden until you Unhide it."
+        "Insert a company logo once in the yellow top-left box: Insert > Pictures > Place in Cell. "
+        "If it floats over the cells, right-click the picture and choose Place in Cell. "
+        "It then appears on every tab. Or paste a logo https link on Settings (Logo URL)."
     )
     ws["A3"].font = font(12, color=MUTED)
     ws["A3"].alignment = align("left", wrap=True)
