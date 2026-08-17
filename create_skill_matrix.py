@@ -1085,29 +1085,9 @@ def build_calc(wb: Workbook) -> None:
     add_defined_name(wb, "ViewMode", f"{q(SHEET_DASH)}!$B$5")
     add_defined_name(wb, "DashFromYear", f"{q(SHEET_DASH)}!$D$5")
     add_defined_name(wb, "DashToYear", f"{q(SHEET_DASH)}!$F$5")
-    add_defined_name(wb, "DashContext", f"{q(SHEET_DASH)}!$B$6")
-    add_defined_name(
-        wb,
-        "DeptFilter",
-        f'IF(ViewMode="Team",DashContext,"(All departments)")',
-    )
-    add_defined_name(
-        wb,
-        "SkillSetFilter",
-        f'IF(ViewMode="Skillsets",DashContext,"{SKILLS[0][1]}")',
-    )
-    add_defined_name(
-        wb,
-        "EmpFilter",
-        f'IF(ViewMode="Individual",DashContext,"{EMPLOYEES[0][1]}")',
-    )
-
-    ws["A3"] = "FilterListName"
-    ws["B3"] = (
-        '=IF(ViewMode="Team","DeptFilterList",'
-        'IF(ViewMode="Skillsets","SkillNameList","EmployeeList"))'
-    )
-    add_defined_name(wb, "FilterListName", f"{q(SHEET_CALC)}!$B$3")
+    add_defined_name(wb, "DeptFilter", f"{q(SHEET_DASH)}!$B$6")
+    add_defined_name(wb, "SkillSetFilter", f"{q(SHEET_DASH)}!$D$6")
+    add_defined_name(wb, "EmpFilter", f"{q(SHEET_DASH)}!$F$6")
 
     year_dv = DataValidation(type="list", formula1="=YearList", allow_blank=False)
     year_dv.promptTitle = "Year"
@@ -1128,11 +1108,23 @@ def build_calc(wb: Workbook) -> None:
     dash_year_dv.add("D5")
     dash_year_dv.add("F5")
 
-    ctx_dv = DataValidation(type="list", formula1="=INDIRECT(FilterListName)", allow_blank=False)
-    ctx_dv.promptTitle = "Filter"
-    ctx_dv.prompt = "After you change Look at, pick Department, Skillset, or Employee here."
-    wb[SHEET_DASH].add_data_validation(ctx_dv)
-    ctx_dv.add("B6")
+    dept_ctx_dv = DataValidation(type="list", formula1="=DeptFilterList", allow_blank=False)
+    dept_ctx_dv.promptTitle = "Department"
+    dept_ctx_dv.prompt = "Used when Look at is Team. Limit overall ratings to one department."
+    wb[SHEET_DASH].add_data_validation(dept_ctx_dv)
+    dept_ctx_dv.add("B6")
+
+    skill_ctx_dv = DataValidation(type="list", formula1="=SkillNameList", allow_blank=False)
+    skill_ctx_dv.promptTitle = "Skillset"
+    skill_ctx_dv.prompt = "Used when Look at is Skillsets. Pick the job to fill; everyone is ranked on this skill."
+    wb[SHEET_DASH].add_data_validation(skill_ctx_dv)
+    skill_ctx_dv.add("D6")
+
+    emp_ctx_dv = DataValidation(type="list", formula1="=EmployeeList", allow_blank=False)
+    emp_ctx_dv.promptTitle = "Employee"
+    emp_ctx_dv.prompt = "Used when Look at is Individual. Compare this person to themselves."
+    wb[SHEET_DASH].add_data_validation(emp_ctx_dv)
+    emp_ctx_dv.add("F6")
 
     # Team average by year (respects department filter)
     ws["A4"] = "Year"
@@ -1260,9 +1252,9 @@ def build_dashboard(wb: Workbook) -> None:
     style_title(ws["A2"], "Dashboard")
     ws.merge_cells("A3:L3")
     ws["A3"] = (
-        "Start by choosing what to look at. Team is year-on-year overall ratings. "
-        "Skillsets ranks everyone on a skill from the Skills sheet and names the best candidate for the job. "
-        "Individual is one person vs themselves."
+        "Look at Team, Skillsets, or Individual, then From year and To year. "
+        "The Skillset dropdown is the job to fill: switch Look at to Skillsets and everyone is ranked on that skill. "
+        "Top row is the best candidate."
     )
     ws["A3"].font = font(11, italic=True, color=MUTED)
     ws["A3"].alignment = align("left", wrap=True)
@@ -1285,17 +1277,43 @@ def build_dashboard(wb: Workbook) -> None:
     ws["F5"].number_format = "0"
     ws.row_dimensions[5].height = 28
 
-    ws["A6"] = '=IF(ViewMode="Team","Department",IF(ViewMode="Skillsets","Skillset","Employee"))'
-    ws["A6"].font = font(10, bold=True, color=WHITE)
-    ws["A6"].fill = fill(NAVY)
-    ws["A6"].alignment = align("center")
+    ws["A6"] = "Department"
+    ws["C6"] = "Skillset"
+    ws["E6"] = "Employee"
+    for col in (1, 3, 5):
+        ws.cell(6, col).font = font(10, bold=True, color=WHITE)
+        ws.cell(6, col).fill = fill(NAVY)
+        ws.cell(6, col).alignment = align("center")
     ws["B6"] = "(All departments)"
-    style_input(ws["B6"])
-    ws["B6"].font = font(12, bold=True, color=NAVY)
-    ws.merge_cells("C6:L6")
-    ws["C6"] = "After you change Look at, pick the yellow cell. Team uses Department, Skillsets uses Skillset, Individual uses Employee."
-    ws["C6"].font = font(10, italic=True, color=MUTED)
-    ws.row_dimensions[6].height = 26
+    ws["D6"] = SKILLS[0][1]
+    ws["F6"] = EMPLOYEES[0][1]
+    for col in (2, 4, 6):
+        style_input(ws.cell(6, col))
+        ws.cell(6, col).font = font(12, bold=True, color=NAVY)
+    ws["D6"].comment = Comment(
+        "This is the job to fill. Set Look at to Skillsets, then pick a skill. "
+        "The table ranks everyone on that skill; the top row is the best candidate.",
+        "Skill Matrix",
+        width=280,
+        height=90,
+    )
+    ws.merge_cells("G6:L6")
+    ws["G6"] = (
+        "Team uses Department. Skillsets uses Skillset (who can do that job). Individual uses Employee."
+    )
+    ws["G6"].font = font(10, italic=True, color=MUTED)
+    ws["G6"].alignment = align("left", wrap=True)
+    ws.row_dimensions[6].height = 28
+
+    for cell, mode in (("B6", "Team"), ("D6", "Skillsets"), ("F6", "Individual")):
+        ws.conditional_formatting.add(
+            cell,
+            FormulaRule(
+                formula=[f'ViewMode="{mode}"'],
+                fill=fill("FFE08A"),
+                font=font(12, bold=True, color=NAVY),
+            ),
+        )
 
     ws.merge_cells("A7:L7")
     ws["A7"] = (
@@ -1451,7 +1469,7 @@ def build_dashboard(wb: Workbook) -> None:
     ).font = font(10, italic=True, color=MUTED)
     ws.cell(10 + n_rows, 1).alignment = align("left", wrap=True)
 
-    for i, w in enumerate([16, 22, 20, 12, 12, 12, 12, 12, 12, 12, 12, 12], 1):
+    for i, w in enumerate([16, 22, 16, 28, 14, 20, 12, 12, 12, 12, 12, 12], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A7"
     ws.sheet_view.showGridLines = False
@@ -1513,8 +1531,8 @@ def build_how_to(wb: Workbook) -> None:
         "2. Dashboard — pick what to look at",
         "Look at: Team, Skillsets, or Individual. Then pick From year and To year.\n\n"
         "Team — year-on-year overall ratings (optionally one department).\n\n"
-        "Skillsets — every person's rating on that skillset, ranked. Top row is the best candidate for the job.\n\n"
-        "Individual — that person vs themselves on each skillset.",
+        "Skillsets — pick a skill in the Skillset dropdown. Everyone is ranked on that job. Top row is the best candidate.\n\n"
+        "Individual — pick a person in the Employee dropdown. That person vs themselves on each skillset.",
         GOLD,
     )
     box(

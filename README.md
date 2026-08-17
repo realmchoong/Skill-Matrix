@@ -11,10 +11,10 @@ Start with **Look at**, then **From year** and **To year**:
 | Look at | What you see |
 | --- | --- |
 | **Team** | Year-on-year **overall** ratings (optionally one department: Vision, Sound, Lighting, Staging) |
-| **Skillsets** | Every person’s rating on that skillset. Ranked. Top row is the **best candidate for the job** |
-| **Individual** | One person vs themselves on each skillset |
+| **Skillsets** | Pick a **Skillset** (the job to fill). Everyone is ranked on that skill. Top row is the **best candidate** |
+| **Individual** | Pick an **Employee**. That person vs themselves on each skillset |
 
-After you change Look at, pick the yellow **Department / Skillset / Employee** cell.
+The yellow **Skillset** dropdown is always there. It is used when Look at is **Skillsets**.
 
 ## Skillsets
 
