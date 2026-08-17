@@ -7,7 +7,7 @@ from openpyxl import Workbook
 from openpyxl.chart import BarChart, LineChart, Reference
 from openpyxl.chart.marker import Marker
 from openpyxl.comments import Comment
-from openpyxl.formatting.rule import CellIsRule, FormulaRule
+from openpyxl.formatting.rule import CellIsRule, ColorScaleRule, FormulaRule
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.workbook.defined_name import DefinedName
@@ -174,8 +174,8 @@ def q(sheet: str) -> str:
 
 
 def glance_skill_col(n: int) -> int:
-    """1-based column for skill slot n (1-based). Employee and Department occupy A:B."""
-    return 2 + n
+    """1-based column for skill slot n (1-based). A=Employee, B=Department, C=Overall."""
+    return 3 + n
 
 
 def year_col(slot: int) -> int:
@@ -784,7 +784,7 @@ def build_skills(wb: Workbook) -> None:
 # ===========================================================================
 def build_matrix(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_MATRIX, 0)
-    last_col = 2 + NUM_SKILL_SLOTS
+    last_col = 3 + NUM_SKILL_SLOTS
     add_navigation(ws, SHEET_MATRIX, last_col)
 
     ws.merge_cells(start_row=TITLE_ROW, start_column=NAV_START_COL, end_row=TITLE_ROW, end_column=6)
@@ -807,10 +807,11 @@ def build_matrix(wb: Workbook) -> None:
     year_cell.font = font(16, bold=True, color=NAVY)
     year_cell.number_format = "0"
 
-    ws.merge_cells("C3:J3")
+    ws.merge_cells("C3:L3")
     ws["C3"] = (
-        "This year's scores. Compare years on the Dashboard (start with Look at). "
-        "To type 1-5 for any year: right-click a sheet tab, Unhide, choose Ratings."
+        "Each skill is coloured 1 (red) to 5 (green). Overall is the average for this year. "
+        "The highest overall is highlighted. Compare years on the Dashboard. "
+        "To type 1-5: right-click a sheet tab, Unhide, choose Ratings."
     )
     ws["C3"].font = font(10, color=MUTED)
     ws["C3"].alignment = align("left")
@@ -819,7 +820,8 @@ def build_matrix(wb: Workbook) -> None:
 
     ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=1, end_row=GLANCE_SKILL_ROW, end_column=1)
     ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=2, end_row=GLANCE_SKILL_ROW, end_column=2)
-    for col, label in ((1, "Employee"), (2, "Department")):
+    ws.merge_cells(start_row=GLANCE_CAT_ROW, start_column=3, end_row=GLANCE_SKILL_ROW, end_column=3)
+    for col, label in ((1, "Employee"), (2, "Department"), (3, "Overall")):
         cell = ws.cell(GLANCE_CAT_ROW, col, label)
         cell.font = font(12, bold=True, color=WHITE)
         cell.fill = fill(NAVY)
@@ -827,6 +829,15 @@ def build_matrix(wb: Workbook) -> None:
         cell.border = THIN
         ws.cell(GLANCE_SKILL_ROW, col).fill = fill(NAVY)
         ws.cell(GLANCE_SKILL_ROW, col).border = THIN
+    ws.cell(GLANCE_CAT_ROW, 3).comment = Comment(
+        "Average of this year's skill ratings. The highest overall is highlighted in gold.",
+        "Skill Matrix",
+        width=260,
+        height=70,
+    )
+
+    first_skill = get_column_letter(glance_skill_col(1))
+    last_skill = get_column_letter(glance_skill_col(NUM_SKILL_SLOTS))
 
     for n in range(1, NUM_SKILL_SLOTS + 1):
         col = glance_skill_col(n)
@@ -859,6 +870,15 @@ def build_matrix(wb: Workbook) -> None:
             if n == 1:
                 ws.cell(r, 1, f'=IF({q(SHEET_EMP)}!B{emp_row}="","",{q(SHEET_EMP)}!B{emp_row})')
                 ws.cell(r, 2, f'=IF(A{r}="","",{q(SHEET_EMP)}!C{emp_row})')
+                overall = ws.cell(
+                    r,
+                    3,
+                    f'=IF($A{r}="","",IFERROR(ROUND(AVERAGE({first_skill}{r}:{last_skill}{r}),2),""))',
+                )
+                overall.number_format = "0.00"
+                overall.font = font(12, bold=True)
+                overall.alignment = align("center")
+                overall.border = THIN
                 ws.cell(r, 1).font = font(11, bold=True)
                 ws.cell(r, 2).font = font(10, color=MUTED)
                 ws.cell(r, 1).border = THIN
@@ -872,29 +892,68 @@ def build_matrix(wb: Workbook) -> None:
                 f"IF(SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,ViewYear)=0,\"\","
                 f"SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,ViewYear)))",
             )
-            cell.fill = fill(TY_FILL)
             cell.alignment = align("center")
             cell.border = THIN
             cell.font = font(12, bold=True)
 
     apply_rating_cf(
         ws,
-        f"{get_column_letter(glance_skill_col(1))}{GLANCE_START}:"
-        f"{get_column_letter(glance_skill_col(NUM_SKILL_SLOTS))}{GLANCE_END}",
+        f"{first_skill}{GLANCE_START}:{last_skill}{GLANCE_END}",
     )
+    ws.conditional_formatting.add(
+        f"C{GLANCE_START}:C{GLANCE_END}",
+        ColorScaleRule(
+            start_type="num",
+            start_value=1,
+            start_color=RATING_FILLS[1],
+            mid_type="num",
+            mid_value=3,
+            mid_color=RATING_FILLS[3],
+            end_type="num",
+            end_value=5,
+            end_color=RATING_FILLS[5],
+        ),
+    )
+    top_formula = (
+        f'AND(ISNUMBER($C{GLANCE_START}),$C{GLANCE_START}=MAX($C${GLANCE_START}:$C${GLANCE_END}))'
+    )
+    for rng in (f"A{GLANCE_START}:A{GLANCE_END}", f"C{GLANCE_START}:C{GLANCE_END}"):
+        rule = FormulaRule(
+            formula=[top_formula],
+            fill=fill("FFE08A"),
+            font=font(12, bold=True, color=NAVY),
+        )
+        rule.stopIfTrue = True
+        ws.conditional_formatting.add(rng, rule)
+
+    legend_row = GLANCE_END + 2
+    ws.cell(legend_row, 1, "Rating colour").font = font(10, bold=True, color=MUTED)
+    for score, color in RATING_FILLS.items():
+        cell = ws.cell(legend_row, score + 1, score)
+        cell.fill = fill(color)
+        cell.font = font(11, bold=True)
+        cell.alignment = align("center")
+        cell.border = THIN
+    ws.merge_cells(start_row=legend_row, start_column=7, end_row=legend_row, end_column=12)
+    ws.cell(
+        legend_row,
+        7,
+        "1 beginner  to  5 expert.  Overall = average.  Gold name = highest overall this year.",
+    ).font = font(10, italic=True, color=MUTED)
 
     ws.column_dimensions["A"].width = 20
     ws.column_dimensions["B"].width = 14
+    ws.column_dimensions["C"].width = 12
     ws.row_dimensions[GLANCE_CAT_ROW].height = 18
     ws.row_dimensions[GLANCE_SKILL_ROW].height = 36
     ws.row_dimensions[GLANCE_YEAR_ROW].height = 28
-    ws.freeze_panes = f"C{GLANCE_START}"
+    ws.freeze_panes = f"D{GLANCE_START}"
     ws.sheet_view.showGridLines = False
     ws.sheet_view.zoomScale = 100
     ws.sheet_properties.tabColor = NAVY
     apply_print(ws, landscape=True)
     ws.print_title_rows = "1:5"
-    ws.print_title_cols = "A:B"
+    ws.print_title_cols = "A:C"
 
 
 # ===========================================================================
@@ -1565,7 +1624,8 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 5, 1, 14, 6,
         "1. This year's crew grid",
-        "Open Skill Matrix. Each row is one person. Each column is one skillset. "
+        "Open Skill Matrix. Each row is one person. Each column is one skillset, coloured 1 (red) to 5 (green). "
+        "Overall is that person's average. The highest overall is highlighted in gold.\n\n"
         "Only this calendar year is shown (or pick another year at the top).\n\n"
         "To type 1-5: right-click a sheet tab, Unhide, choose Ratings. Then Hide it again when you are done.",
         NAVY,
