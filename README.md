@@ -37,25 +37,25 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 | Sheet | What it is for |
 | --- | --- |
 | **How to Use** | Walkthrough and the 1–5 scale |
-| **Skill Matrix** | Whole crew, **one year**. Ratings are underlined 1–5. **Overall** is the average; the highest is highlighted |
+| **Skill Matrix** | Whole crew, **this year**. Type **1–5** here. Scores also appear on Ratings |
 | **Dashboard** | Look at Team, Skillsets, or Individual |
 | **Employees** | Add a person in the next yellow row (fill clears when you type) |
 | **Skills** | Skillset catalog (ratings and Dashboard ranking) |
 | **Years** | Year list |
 | **Lists** | Departments |
 | **Settings** | Target rating (default 3) |
-| **Ratings** (hidden) | Type 1–5 for any year. Recall: right-click a tab → **Unhide** → Ratings. Hide it again when done. |
+| **Ratings** (hidden) | All years. This year follows Skill Matrix. Type older years here. Unhide: right-click a tab → **Unhide** → Ratings |
 
 ## Rate a skillset
 
-1. Right-click a sheet tab → **Unhide** → **Ratings**. Type **1–5** in the year column.
-2. Right-click the Ratings tab → **Hide**.
-3. Open **Skill Matrix** for this year’s crew grid.
+1. Open **Skill Matrix**. Type **1–5** in that person’s skill cell. Empty cells are yellow until you type.
+2. Unhide **Ratings** if you want to check: this year’s column matches the grid. Hide it again when done.
+3. To score an **older year**, Unhide **Ratings** and type in that year column.
 4. Open **Dashboard**, choose **Look at**, then From / To years.
 
 ## Update in Excel (no Python)
 
-Keep using **this same workbook**. Type values in the sheets below. Do **not** paste Python, and do **not** type over formula cells on **Skill Matrix**, **Dashboard** (except the yellow dropdowns), **Data**, or **Calc**.
+Keep using **this same workbook**. Type values in the sheets below. Do **not** paste Python. Do **not** type over name/overall formulas on **Skill Matrix**, or over the Dashboard table, **Data**, or **Calc**.
 
 | What you want | Where to type |
 | --- | --- |
@@ -63,7 +63,8 @@ Keep using **this same workbook**. Type values in the sheets below. Do **not** p
 | Add a skillset | **Skills** — next yellow row: Skill Name (then Category / Description) |
 | Add a department | **Lists** — next yellow row, then choose it on Employees |
 | Add a year (2035 or later) | **Years** — next yellow Year cell, in order, oldest to newest |
-| Type or change a 1–5 score | Right-click a tab → **Unhide** → **Ratings**. Type in that person’s skill row and year column. Hide Ratings when done |
+| Type this year’s 1–5 | **Skill Matrix** — the person’s skill cell. It also appears on Ratings |
+| Type an older year’s 1–5 | **Ratings** (Unhide) — that year column |
 | Change Look at / years / filters | **Dashboard** — yellow dropdowns only |
 | Target rating or logo URL | **Settings** |
 | Company logo picture | **How to Use** — yellow top-left box, Insert → Pictures → **Place in Cell** |
@@ -90,7 +91,8 @@ Copy in this order:
 | **Skills** | **Skills**, starting at **B6** | Skill Name, Category, Description. Same row order. Do not paste over column A |
 | **Lists** | **Lists**, starting at **A6** | Department names |
 | **Years** | **Years**, starting at **B8** | Extra years you typed (if any), plus label/notes |
-| **Ratings** (Unhide on both files) | **Ratings**, starting at **E6** | Only the **1–5 year columns** (E and to the right, until the summary columns). Do **not** paste columns A–D (those are formulas) |
+| **Ratings** (Unhide on both files) | **Ratings**, starting at **E6** | Only **older year** 1–5 columns. Do **not** paste this year’s column (it follows Skill Matrix) or columns A–D |
+| **Skill Matrix** scores | **Skill Matrix**, starting at **D6** | This year’s 1–5 grid only |
 | **Settings** | **Settings** **B6** and **B7** | Target rating and Logo URL |
 | **Dashboard** yellow cells | Same yellow cells | Look at, From year, To year, Department, Skillset, Employee |
 

@@ -185,6 +185,25 @@ def glance_skill_col(n: int) -> int:
     return 3 + n
 
 
+def skill_matrix_rating_ref(emp_i: int, skill_i: int) -> str:
+    row = GLANCE_START + emp_i
+    col = get_column_letter(glance_skill_col(skill_i + 1))
+    return f"{q(SHEET_MATRIX)}!{col}{row}"
+
+
+def ratings_year_formula(emp_i: int, skill_i: int, slot: int, fallback) -> str:
+    """This calendar year follows Skill Matrix; other years keep the stored score."""
+    r = matrix_row(emp_i, skill_i)
+    ycol = get_column_letter(year_col(slot))
+    hdr = f"{ycol}${MATRIX_HEADER_ROW}"
+    ref = skill_matrix_rating_ref(emp_i, skill_i)
+    fb = '""' if fallback in (None, "") else str(int(fallback))
+    return (
+        f'=IF(OR($A{r}="",{hdr}=""),"",'
+        f'IF({hdr}=CalendarYear,IF({ref}="","",{ref}),{fb}))'
+    )
+
+
 def year_col(slot: int) -> int:
     return YEAR_FIRST_COL + slot
 
@@ -836,9 +855,9 @@ def build_matrix(wb: Workbook) -> None:
 
     ws.merge_cells("C3:L3")
     ws["C3"] = (
-        "Each skill rating is underlined, 1 (red) to 5 (green). Overall is the average for this year. "
-        "The highest overall is highlighted. Compare years on the Dashboard. "
-        "To type 1-5: right-click a sheet tab, Unhide, choose Ratings."
+        "Type 1-5 in the grid for this year. Those scores also appear on Ratings (Unhide). "
+        "Each rating is underlined, 1 (red) to 5 (green). Overall is the average. "
+        "The highest overall is highlighted. Compare other years on the Dashboard."
     )
     ws["C3"].font = font(10, color=MUTED)
     ws["C3"].alignment = align("left")
@@ -879,7 +898,6 @@ def build_matrix(wb: Workbook) -> None:
         cat.alignment = align("center")
         cat.border = THIN
 
-        skill_name_cell = f"{get_column_letter(col)}${GLANCE_SKILL_ROW}"
         name = ws.cell(
             GLANCE_SKILL_ROW,
             col,
@@ -912,13 +930,9 @@ def build_matrix(wb: Workbook) -> None:
                 ws.cell(r, 2).border = THIN
                 ws.row_dimensions[r].height = 22
 
-            cell = ws.cell(
-                r,
-                col,
-                f'=IF(OR($A{r}="",{skill_name_cell}="",ViewYear=""),"",'
-                f"IF(SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,ViewYear)=0,\"\","
-                f"SUMIFS(DataRating,DataEmployee,$A{r},DataSkill,{skill_name_cell},DataYear,ViewYear)))",
-            )
+            this_year = date.today().year
+            value = rating_for(i, n - 1, this_year)
+            cell = ws.cell(r, col, value if value is not None else "")
             cell.alignment = align("center")
             cell.border = THIN
             cell.font = font(12, bold=True)
@@ -926,6 +940,14 @@ def build_matrix(wb: Workbook) -> None:
     apply_rating_cf(
         ws,
         f"{first_skill}{GLANCE_START}:{last_skill}{GLANCE_END}",
+    )
+    add_rating_validation(ws, f"{first_skill}{GLANCE_START}:{last_skill}{GLANCE_END}")
+    apply_blank_input_cf(ws, f"{first_skill}{GLANCE_START}:{last_skill}{GLANCE_END}")
+    ws.cell(GLANCE_START, glance_skill_col(1)).comment = Comment(
+        "Type 1-5 here for this year. The same number appears in this year's column on Ratings.",
+        "Skill Matrix",
+        width=280,
+        height=70,
     )
     top_formula = (
         f'AND(ISNUMBER($C{GLANCE_START}),$C{GLANCE_START}=MAX($C${GLANCE_START}:$C${GLANCE_END}))'
@@ -950,7 +972,8 @@ def build_matrix(wb: Workbook) -> None:
     ws.cell(
         legend_row,
         7,
-        "1 beginner  to  5 expert, underlined.  Overall = average.  Gold name = highest overall this year.",
+        "1 beginner  to  5 expert, underlined.  Type 1-5 in the grid for this year.  "
+        "Gold name = highest overall.",
     ).font = font(10, italic=True, color=MUTED)
 
     ws.column_dimensions["A"].width = 20
@@ -969,7 +992,7 @@ def build_matrix(wb: Workbook) -> None:
 
 
 # ===========================================================================
-# Ratings (all years — source of truth for data entry)
+# Ratings (all years — this year follows Skill Matrix)
 # ===========================================================================
 def build_ratings(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_RATINGS)
@@ -982,8 +1005,8 @@ def build_ratings(wb: Workbook) -> None:
     ws.cell(
         TITLE_ROW,
         9,
-        "Type 1-5 here for any year. This sheet is hidden in the tab bar. "
-        "When you are done, right-click this tab and choose Hide.",
+        "This year's 1-5 scores are typed on Skill Matrix and show up here. "
+        "Type older years in those year columns. Hide this tab when you are done.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
 
@@ -991,8 +1014,8 @@ def build_ratings(wb: Workbook) -> None:
     ws.cell(
         MATRIX_INFO_ROW,
         1,
-        '="Rating 1-5. Current calendar year: "&CalendarYear&'
-        '". Latest year with ratings: "&IF(LatestYear="","-",LatestYear)&'
+        '="This year ("&CalendarYear&") follows Skill Matrix. Type older years in their columns. '
+        'Latest year with ratings: "&IF(LatestYear="","-",LatestYear)&'
         '". Filter the Employee column to focus on one person."',
     ).font = font(11, color=MUTED)
 
@@ -1064,9 +1087,8 @@ def build_ratings(wb: Workbook) -> None:
                 cell.font = font(12, bold=True)
                 year = PRESET_YEARS[slot] if slot < len(PRESET_YEARS) else None
                 value = rating_for(emp_i, skill_i, year) if year else None
-                if value is not None:
-                    cell.value = value
-                cell.fill = fill(TY_FILL if year == 2026 else LY_FILL)
+                cell.value = ratings_year_formula(emp_i, skill_i, slot, value)
+                cell.fill = fill(TY_FILL if year == date.today().year else LY_FILL)
 
             rng = f"{year_start}{r}:{year_end}{r}"
             first_c = ws.cell(
@@ -1110,15 +1132,6 @@ def build_ratings(wb: Workbook) -> None:
     apply_change_cf(
         ws,
         f"{get_column_letter(SUMMARY_FIRST_COL + 2)}{MATRIX_DATA_START}:{get_column_letter(SUMMARY_FIRST_COL + 3)}{MATRIX_DATA_END}",
-    )
-
-    # Highlight current year input cells
-    ws.conditional_formatting.add(
-        year_data,
-        FormulaRule(
-            formula=[f'AND({year_start}${MATRIX_HEADER_ROW}=CalendarYear,{year_start}{MATRIX_DATA_START}="")'],
-            fill=fill(YELLOW),
-        ),
     )
 
     ws.column_dimensions["A"].width = 20
@@ -1202,12 +1215,6 @@ def build_calc(wb: Workbook) -> None:
     add_defined_name(wb, "DeptFilter", f"{q(SHEET_DASH)}!$B$6")
     add_defined_name(wb, "SkillSetFilter", f"{q(SHEET_DASH)}!$D$6")
     add_defined_name(wb, "EmpFilter", f"{q(SHEET_DASH)}!$F$6")
-
-    year_dv = DataValidation(type="list", formula1="=YearList", allow_blank=False)
-    year_dv.promptTitle = "Year"
-    year_dv.prompt = "Pick a year from the Years list."
-    wb[SHEET_MATRIX].add_data_validation(year_dv)
-    year_dv.add("B3")
 
     view_dv = DataValidation(type="list", formula1="=ViewModeList", allow_blank=False)
     view_dv.promptTitle = "Look at"
@@ -1647,10 +1654,11 @@ def build_how_to(wb: Workbook) -> None:
         ws, 5, 1, 14, 6,
         "1. This year's crew grid",
         "Open Skill Matrix. Each row is one person. Each column is one skillset. "
+        "Type 1-5 in the grid for this year. Those scores also appear on Ratings. "
         "Ratings are underlined, 1 (red) to 5 (green). Overall is that person's average. "
         "The highest overall is highlighted in gold.\n\n"
-        "Only this calendar year is shown (or pick another year at the top).\n\n"
-        "To type 1-5: right-click a sheet tab, Unhide, choose Ratings. Then Hide it again when you are done.",
+        "Only this calendar year is shown. Compare other years on the Dashboard.\n\n"
+        "To edit an older year: right-click a sheet tab, Unhide, choose Ratings.",
         NAVY,
     )
     box(
@@ -1673,9 +1681,9 @@ def build_how_to(wb: Workbook) -> None:
     )
     box(
         ws, 16, 7, 24, 12,
-        "4. Ratings (hidden) and new years",
-        "Ratings holds every year. It is hidden so the tabs stay simple.\n\n"
-        "Recall it: right-click any sheet tab > Unhide > Ratings. Hide it the same way when finished.\n\n"
+        "4. This year on Skill Matrix; older years on Ratings",
+        "Type this year's 1-5 on Skill Matrix. Ratings shows that same column automatically.\n\n"
+        "Older years: right-click any sheet tab > Unhide > Ratings, then type in that year column. Hide it the same way when finished.\n\n"
         "Years 2023-2034 are already columns. To add 2035 or later, type it on Years in the next yellow row.",
         TEAL,
     )
@@ -1704,8 +1712,8 @@ def build_how_to(wb: Workbook) -> None:
     ws["A31"] = (
         "Microsoft 365 / Excel 2021+ is recommended (MAXIFS, SUMIFS, LOOKUP). "
         "No Python and no macros. "
-        "Type only on Employees, Skills, Years, Lists, Ratings, Settings, and the yellow Dashboard dropdowns. "
-        "Do not overwrite formulas on Skill Matrix, Dashboard, Data, or Calc."
+        "Type this year's 1-5 on Skill Matrix. Type older years on Ratings (Unhide that tab). "
+        "Do not overwrite name/overall formulas on Skill Matrix, or the Dashboard table, Data, or Calc."
     )
     ws["A31"].font = font(10, italic=True, color=MUTED)
     ws["A31"].alignment = align("left", wrap=True)
@@ -1727,9 +1735,9 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 35, 7, 44, 12,
         "Scores and what not to touch",
-        "Type 1-5 on Ratings (Unhide that tab). Filter the Employee column if you want one person.\n\n"
+        "Type 1-5 on Skill Matrix for this year. Those scores appear on Ratings.\n\n"
+        "Older years: Unhide Ratings and type in that year column.\n\n"
         "Dashboard yellow cells are dropdowns: Look at, From / To year, Department, Skillset, Employee.\n\n"
-        "Skill Matrix and the Dashboard table are formulas. Click a result if you like, but do not type over it.\n\n"
         "Leave Data and Calc hidden. Those sheets power the numbers.\n\n"
         "New layout from a download: copy your Employees, Skills, Lists, Years, and Ratings numbers into the new file (Paste Special > Values). Then use the new file.",
         TEAL,

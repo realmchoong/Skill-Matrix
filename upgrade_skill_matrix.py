@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
+import re
 
 from openpyxl import load_workbook
 from openpyxl.drawing.image import Image as XLImage
@@ -10,6 +12,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from create_skill_matrix import (
+    GLANCE_START,
     MATRIX_HEADER_ROW,
     NUM_EMPLOYEE_SLOTS,
     NUM_LIST_SLOTS,
@@ -20,13 +23,16 @@ from create_skill_matrix import (
     SHEET_DASH,
     SHEET_EMP,
     SHEET_LISTS,
+    SHEET_MATRIX,
     SHEET_RATINGS,
     SHEET_SETTINGS,
     SHEET_SKILLS,
     SHEET_YEARS,
     SKILLS,
     YEAR_FIRST_COL,
+    glance_skill_col,
     matrix_row,
+    ratings_year_formula,
     year_col,
 )
 
@@ -45,6 +51,7 @@ def copy_user_data(source_path: str | Path, dest: Workbook) -> None:
     years = _read_years(src[SHEET_YEARS]) if SHEET_YEARS in src.sheetnames else []
     departments = _read_departments(src[SHEET_LISTS]) if SHEET_LISTS in src.sheetnames else []
     ratings = _read_ratings(src, employees, skills, years)
+    ratings.update(_read_skill_matrix_scores(src, employees, skills))
     settings = _read_settings(src)
     dashboard = _read_dashboard(src)
 
@@ -55,7 +62,14 @@ def copy_user_data(source_path: str | Path, dest: Workbook) -> None:
         _write_years(dest[SHEET_YEARS], years)
     if departments:
         _write_departments(dest[SHEET_LISTS], departments)
-    _write_ratings(dest[SHEET_RATINGS], dest[SHEET_EMP], dest[SHEET_SKILLS], dest[SHEET_YEARS], ratings)
+    _write_ratings(
+        dest[SHEET_RATINGS],
+        dest[SHEET_MATRIX],
+        dest[SHEET_EMP],
+        dest[SHEET_SKILLS],
+        dest[SHEET_YEARS],
+        ratings,
+    )
     _write_settings(dest, settings)
     _write_dashboard(dest, dashboard)
     images = _collect_images(src)
@@ -101,6 +115,23 @@ def _find_header_row(ws: Worksheet, title: str, max_row: int = 12) -> int | None
 
 def _is_formula(value) -> bool:
     return isinstance(value, str) and value.startswith("=")
+
+
+def _rating_number(value):
+    if value in (None, ""):
+        return None
+    if _is_formula(value):
+        match = re.search(r",(\d+)\)\)$", value.replace(" ", ""))
+        if not match:
+            return None
+        value = match.group(1)
+    try:
+        rating = int(value)
+    except (TypeError, ValueError):
+        return None
+    if 1 <= rating <= 5:
+        return rating
+    return None
 
 
 def _read_block(ws: Worksheet, header: str, columns: list[str], start_hint: int = 5) -> list[dict]:
@@ -245,16 +276,31 @@ def _read_ratings(src: Workbook, employees: list, skills: list, years: list) -> 
             for col, year in year_headers:
                 if year is None:
                     continue
-                value = ws.cell(row, col).value
-                if _is_formula(value) or value in (None, ""):
-                    continue
-                try:
-                    rating = int(value)
-                except (TypeError, ValueError):
-                    continue
-                if 1 <= rating <= 5:
+                rating = _rating_number(ws.cell(row, col).value)
+                if rating is not None:
                     ratings[(emp_name.lower(), skill_name.lower(), int(year))] = rating
     return ratings
+
+
+def _read_skill_matrix_scores(src: Workbook, employees: list, skills: list) -> dict[tuple[str, str, int], int]:
+    """Numbers typed on Skill Matrix (this year) override Ratings for the calendar year."""
+    if SHEET_MATRIX not in src.sheetnames:
+        return {}
+    ws = src[SHEET_MATRIX]
+    this_year = date.today().year
+    found: dict[tuple[str, str, int], int] = {}
+    for emp_i, emp in enumerate(employees[:NUM_EMPLOYEE_SLOTS]):
+        for skill_i, skill in enumerate(skills[:NUM_SKILL_SLOTS]):
+            value = ws.cell(GLANCE_START + emp_i, glance_skill_col(skill_i + 1)).value
+            if _is_formula(value) or value in (None, ""):
+                continue
+            try:
+                rating = int(value)
+            except (TypeError, ValueError):
+                continue
+            if 1 <= rating <= 5:
+                found[(emp[1].lower(), skill[0].lower(), this_year)] = rating
+    return found
 
 
 def _detect_rating_slots(ws: Worksheet, header_row: int) -> tuple[int, int]:
@@ -365,6 +411,7 @@ def _write_departments(ws: Worksheet, departments: list[str]) -> None:
 
 def _write_ratings(
     ratings_ws: Worksheet,
+    matrix_ws: Worksheet,
     emp_ws: Worksheet,
     skill_ws: Worksheet,
     years_ws: Worksheet,
@@ -381,6 +428,7 @@ def _write_ratings(
         except (TypeError, ValueError):
             years.append(None)
 
+    this_year = date.today().year
     for emp_i in range(NUM_EMPLOYEE_SLOTS):
         for skill_i in range(NUM_SKILL_SLOTS):
             row = matrix_row(emp_i, skill_i)
@@ -390,7 +438,11 @@ def _write_ratings(
                 col = year_col(slot)
                 year = years[slot] if slot < len(years) else None
                 value = ratings.get((emp, skill, year)) if emp and skill and year else None
-                ratings_ws.cell(row, col).value = value
+                if year == this_year:
+                    matrix_ws.cell(GLANCE_START + emp_i, glance_skill_col(skill_i + 1)).value = (
+                        value if value is not None else ""
+                    )
+                ratings_ws.cell(row, col).value = ratings_year_formula(emp_i, skill_i, slot, value)
 
 
 def _write_settings(dest: Workbook, settings: dict) -> None:
