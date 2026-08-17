@@ -1730,7 +1730,8 @@ def build_how_to(wb: Workbook) -> None:
         "Type 1-5 on Ratings (Unhide that tab). Filter the Employee column if you want one person.\n\n"
         "Dashboard yellow cells are dropdowns: Look at, From / To year, Department, Skillset, Employee.\n\n"
         "Skill Matrix and the Dashboard table are formulas. Click a result if you like, but do not type over it.\n\n"
-        "Leave Data and Calc hidden. Those sheets power the numbers.",
+        "Leave Data and Calc hidden. Those sheets power the numbers.\n\n"
+        "New layout from a download: copy your Employees, Skills, Lists, Years, and Ratings numbers into the new file (Paste Special > Values). Then use the new file.",
         TEAL,
     )
 

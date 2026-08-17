@@ -72,6 +72,34 @@ If a cell already shows a formula in the formula bar (starts with `=`), leave it
 
 Overwrite sample names and scores with your crew. Save the file as you go (`Ctrl+S` / `Cmd+S`).
 
+## Get new features into an existing file
+
+Layout changes (yellow-fill behaviour, Dashboard Skillsets list, logo box, and so on) live in a **new** `Employee_Skill_Matrix.xlsx`. They cannot be pasted as Python, and they cannot be merged into the old file automatically without Python.
+
+Do this in Excel only:
+
+1. Keep your current workbook. File → **Save As** a backup (for example `Skill_Matrix_backup.xlsx`).
+2. Download the latest **[Employee_Skill_Matrix.xlsx](Employee_Skill_Matrix.xlsx)** and open it. You now have two Excel windows: **Old** (your data) and **New** (the features).
+3. Copy **values only** from Old into New. After you copy, right-click the destination → **Paste Special** → **Values** (not a normal paste). That keeps the new formulas intact.
+
+Copy in this order:
+
+| From Old | Paste Values into New | What to copy |
+| --- | --- | --- |
+| **Employees** | **Employees**, starting at **B6** | Full Name, Department, Hire Date, Status. Keep people in the **same row order**. Do not paste over column A (Employee ID) |
+| **Skills** | **Skills**, starting at **B6** | Skill Name, Category, Description. Same row order. Do not paste over column A |
+| **Lists** | **Lists**, starting at **A6** | Department names |
+| **Years** | **Years**, starting at **B8** | Extra years you typed (if any), plus label/notes |
+| **Ratings** (Unhide on both files) | **Ratings**, starting at **E6** | Only the **1–5 year columns** (E and to the right, until the summary columns). Do **not** paste columns A–D (those are formulas) |
+| **Settings** | **Settings** **B6** and **B7** | Target rating and Logo URL |
+| **Dashboard** yellow cells | Same yellow cells | Look at, From year, To year, Department, Skillset, Employee |
+
+4. If you had a logo, insert it again on **How to Use** with **Place in Cell**.
+5. Hide **Ratings** on the new file. Check **Skill Matrix** and **Dashboard**.
+6. Save the **new** file and use that one from now on.
+
+If a paste overwrites a formula (formula bar still starts with `=` on Skill Matrix / Dashboard / Ratings A–D), Undo (`Ctrl+Z`) and paste into the value cells listed above instead.
+
 ## Rebuild the file (optional)
 
 Python is **not required** to use the workbook. It is only for people who maintain this repository and need to rebuild the `.xlsx` from the generator scripts.
