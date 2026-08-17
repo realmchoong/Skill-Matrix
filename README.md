@@ -16,9 +16,11 @@ Start with **Look at**, then **From year** and **To year**:
 
 The yellow **Skillset** dropdown is always there. It is used when Look at is **Skillsets**.
 
+The top-left box on each sheet is for a **company logo** (Insert → Pictures, then resize to the box).
+
 ## Skillsets
 
-Broadcast Camera Operation, PTZ Cameras Operation, Shading / CCU, ATEM Vision Switching, Barco Vision Switching, Camera Switching, Content Operation, Systems Tech, Technical Setup, Live Streaming.
+Broadcast Camera Operation, PTZ Cameras Operation, Shading / CCU, ATEM Vision Switching, Barco Vision Switching, Camera Switching, Content Operation, Systems Tech, Technical Setup, Live Streaming, Troubleshooting.
 
 Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in the Dashboard Skillsets list.
 

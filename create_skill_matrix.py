@@ -24,6 +24,7 @@ NUM_LIST_SLOTS = 16
 
 NAV_ROW = 1
 TITLE_ROW = 2
+NAV_START_COL = 3  # C; A1:B2 is reserved for a company logo
 MATRIX_INFO_ROW = 3
 MATRIX_HEADER_ROW = 5
 MATRIX_DATA_START = 6
@@ -130,20 +131,21 @@ SKILLS = [
     ("SK-008", "Systems Tech", "Systems", "Signal flow, routing, networking, and show systems"),
     ("SK-009", "Technical Setup", "Systems", "Rig, patch, and line-check before doors"),
     ("SK-010", "Live Streaming", "Streaming", "Encode, monitor, and deliver the live stream"),
+    ("SK-011", "Troubleshooting", "Systems", "Diagnose and fix vision issues during setup and show"),
 ]
 
 DEPARTMENTS = ["Vision", "Sound", "Lighting", "Staging"]
 
 # (2025, 2026) in SKILLS order
 BASE_2526 = [
-    [(3, 3), (2, 2), (2, 3), (3, 4), (4, 5), (3, 3), (2, 3), (3, 3), (3, 4), (2, 2)],
-    [(5, 5), (4, 4), (4, 5), (2, 3), (2, 2), (5, 5), (2, 3), (2, 3), (3, 3), (2, 2)],
-    [(2, 3), (2, 2), (2, 2), (4, 5), (2, 3), (3, 3), (4, 5), (2, 3), (3, 3), (4, 4)],
-    [(2, 2), (2, 2), (3, 3), (2, 3), (3, 3), (2, 2), (3, 3), (5, 5), (4, 5), (3, 3)],
-    [(1, 2), (1, 2), (1, 2), (1, 2), (1, 2), (1, 2), (2, 3), (3, 4), (4, 5), (2, 2)],
-    [(1, 2), (2, 2), (1, 2), (2, 2), (1, 2), (2, 2), (3, 3), (3, 3), (3, 3), (4, 5)],
-    [(4, 4), (3, 4), (4, 4), (4, 4), (4, 4), (4, 4), (3, 4), (4, 4), (4, 4), (3, 3)],
-    [(2, 2), (2, 2), (2, 2), (2, 3), (2, 2), (2, 2), (4, 5), (2, 3), (2, 3), (3, 4)],
+    [(3, 3), (2, 2), (2, 3), (3, 4), (4, 5), (3, 3), (2, 3), (3, 3), (3, 4), (2, 2), (3, 4)],
+    [(5, 5), (4, 4), (4, 5), (2, 3), (2, 2), (5, 5), (2, 3), (2, 3), (3, 3), (2, 2), (4, 4)],
+    [(2, 3), (2, 2), (2, 2), (4, 5), (2, 3), (3, 3), (4, 5), (2, 3), (3, 3), (4, 4), (3, 4)],
+    [(2, 2), (2, 2), (3, 3), (2, 3), (3, 3), (2, 2), (3, 3), (5, 5), (4, 5), (3, 3), (4, 5)],
+    [(1, 2), (1, 2), (1, 2), (1, 2), (1, 2), (1, 2), (2, 3), (3, 4), (4, 5), (2, 2), (3, 4)],
+    [(1, 2), (2, 2), (1, 2), (2, 2), (1, 2), (2, 2), (3, 3), (3, 3), (3, 3), (4, 5), (2, 3)],
+    [(4, 4), (3, 4), (4, 4), (4, 4), (4, 4), (4, 4), (3, 4), (4, 4), (4, 4), (3, 3), (4, 5)],
+    [(2, 2), (2, 2), (2, 2), (2, 3), (2, 2), (2, 2), (4, 5), (2, 3), (2, 3), (3, 4), (2, 3)],
 ]
 
 RATING_SCALE = [
@@ -188,9 +190,37 @@ def add_defined_name(wb: Workbook, name: str, ref: str) -> None:
     wb.defined_names.add(DefinedName(name=name, attr_text=ref))
 
 
+def add_logo_box(ws) -> None:
+    """Empty A1:B2 so a company logo can be inserted in the top-left corner."""
+    ws.merge_cells("A1:B2")
+    cell = ws["A1"]
+    cell.value = "Company logo"
+    cell.font = font(10, italic=True, color=MUTED)
+    cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    cell.fill = fill(PAPER)
+    cell.comment = Comment(
+        "Insert your company logo here: Insert > Pictures, then resize it to this box.",
+        "Skill Matrix",
+        width=260,
+        height=70,
+    )
+    logo_border = Border(
+        left=Side(style="medium", color=LINE),
+        right=Side(style="medium", color=LINE),
+        top=Side(style="medium", color=LINE),
+        bottom=Side(style="medium", color=LINE),
+    )
+    for r in (1, 2):
+        for c in (1, 2):
+            ws.cell(r, c).border = logo_border
+            ws.cell(r, c).fill = fill(PAPER)
+
+
 def add_navigation(ws, active: str, last_col: int) -> None:
-    for i, name in enumerate(NAV_SHEETS, start=1):
-        cell = ws.cell(NAV_ROW, i, name)
+    add_logo_box(ws)
+    for i, name in enumerate(NAV_SHEETS):
+        col = NAV_START_COL + i
+        cell = ws.cell(NAV_ROW, col, name)
         cell.hyperlink = f"#'{name}'!A1"
         cell.font = font(10, bold=name == active, color=WHITE, underline="single")
         cell.fill = fill(TEAL if name == active else NAVY)
@@ -199,9 +229,10 @@ def add_navigation(ws, active: str, last_col: int) -> None:
             left=Side(style="thin", color="0A3A5C"),
             right=Side(style="thin", color="0A3A5C"),
         )
-    for col in range(len(NAV_SHEETS) + 1, last_col + 1):
+    nav_end = NAV_START_COL + len(NAV_SHEETS) - 1
+    for col in range(nav_end + 1, last_col + 1):
         ws.cell(NAV_ROW, col).fill = fill(NAVY)
-    ws.row_dimensions[NAV_ROW].height = 24
+    ws.row_dimensions[NAV_ROW].height = 40
 
 
 def style_title(cell, text: str, size: int = 22) -> None:
@@ -312,8 +343,8 @@ def apply_change_cf(ws, cells_range: str) -> None:
 def build_settings(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_SETTINGS)
     add_navigation(ws, SHEET_SETTINGS, 8)
-    ws.merge_cells("A2:H2")
-    style_title(ws["A2"], "Settings")
+    ws.merge_cells("C2:H2")
+    style_title(ws["C2"], "Settings")
     ws.merge_cells("A3:H3")
     ws["A3"] = (
         "Target rating is the only number you usually need to change. Years are managed on the Years sheet. "
@@ -386,7 +417,7 @@ def build_settings(wb: Workbook) -> None:
     ws.column_dimensions["B"].width = 18
     for col in range(3, 9):
         ws.column_dimensions[get_column_letter(col)].width = 16
-    ws.freeze_panes = "A2"
+    ws.freeze_panes = "A3"
     ws.sheet_properties.tabColor = GOLD
     apply_print(ws, landscape=False)
 
@@ -397,8 +428,8 @@ def build_settings(wb: Workbook) -> None:
 def build_lists(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_LISTS)
     add_navigation(ws, SHEET_LISTS, 8)
-    ws.merge_cells("A2:H2")
-    style_title(ws["A2"], "Departments")
+    ws.merge_cells("C2:H2")
+    style_title(ws["C2"], "Departments")
     ws.merge_cells("A3:H3")
     ws["A3"] = (
         "Departments: Vision, Sound, Lighting, Staging. "
@@ -473,8 +504,8 @@ def build_lists(wb: Workbook) -> None:
 def build_years(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_YEARS)
     add_navigation(ws, SHEET_YEARS, 8)
-    ws.merge_cells("A2:D2")
-    style_title(ws["A2"], "Years")
+    ws.merge_cells("C2:E2")
+    style_title(ws["C2"], "Years")
 
     # Call-to-action panel that behaves like an Add Year button
     ws.merge_cells("F2:H4")
@@ -596,8 +627,8 @@ def build_years(wb: Workbook) -> None:
 def build_employees(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_EMP)
     add_navigation(ws, SHEET_EMP, 5)
-    ws.merge_cells("A2:E2")
-    style_title(ws["A2"], "Employees")
+    ws.merge_cells("C2:E2")
+    style_title(ws["C2"], "Employees")
     ws.merge_cells("A3:E3")
     ws["A3"] = (
         "Add a person in the next yellow row: name, department (dropdown), hire date, status. "
@@ -670,8 +701,8 @@ def build_employees(wb: Workbook) -> None:
 def build_skills(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_SKILLS)
     add_navigation(ws, SHEET_SKILLS, 4)
-    ws.merge_cells("A2:D2")
-    style_title(ws["A2"], "Skillsets")
+    ws.merge_cells("C2:D2")
+    style_title(ws["C2"], "Skillsets")
     ws.merge_cells("A3:D3")
     ws["A3"] = (
         "These are the skillsets everyone is rated on, and the list Dashboard uses when you Look at Skillsets. "
@@ -744,8 +775,8 @@ def build_matrix(wb: Workbook) -> None:
     last_col = 2 + NUM_SKILL_SLOTS
     add_navigation(ws, SHEET_MATRIX, last_col)
 
-    ws.merge_cells(start_row=TITLE_ROW, start_column=1, end_row=TITLE_ROW, end_column=6)
-    style_title(ws["A2"], "Crew skill matrix")
+    ws.merge_cells(start_row=TITLE_ROW, start_column=NAV_START_COL, end_row=TITLE_ROW, end_column=6)
+    style_title(ws.cell(TITLE_ROW, NAV_START_COL), "Crew skill matrix")
     ws.merge_cells(start_row=TITLE_ROW, start_column=7, end_row=TITLE_ROW, end_column=last_col)
     ws.cell(
         TITLE_ROW,
@@ -862,8 +893,8 @@ def build_ratings(wb: Workbook) -> None:
     last_col = SUMMARY_FIRST_COL + 4
     add_navigation(ws, SHEET_RATINGS, last_col)
 
-    ws.merge_cells(start_row=TITLE_ROW, start_column=1, end_row=TITLE_ROW, end_column=8)
-    style_title(ws["A2"], "Ratings — all years")
+    ws.merge_cells(start_row=TITLE_ROW, start_column=NAV_START_COL, end_row=TITLE_ROW, end_column=8)
+    style_title(ws.cell(TITLE_ROW, NAV_START_COL), "Ratings — all years")
     ws.merge_cells(start_row=TITLE_ROW, start_column=9, end_row=TITLE_ROW, end_column=last_col)
     ws.cell(
         TITLE_ROW,
@@ -1248,8 +1279,8 @@ def build_dashboard(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_DASH, 1)
     add_navigation(ws, SHEET_DASH, 12)
 
-    ws.merge_cells("A2:L2")
-    style_title(ws["A2"], "Dashboard")
+    ws.merge_cells("C2:L2")
+    style_title(ws["C2"], "Dashboard")
     ws.merge_cells("A3:L3")
     ws["A3"] = (
         "Look at Team, Skillsets, or Individual, then From year and To year. "
@@ -1507,12 +1538,12 @@ def box(ws, r1, c1, r2, c2, title, body, accent=TEAL) -> None:
 def build_how_to(wb: Workbook) -> None:
     ws = wb.create_sheet(SHEET_HOW, 0)
     add_navigation(ws, SHEET_HOW, 12)
-    ws.merge_cells("A2:L2")
-    style_title(ws["A2"], "How to use this skill matrix")
+    ws.merge_cells("C2:L2")
+    style_title(ws["C2"], "How to use this skill matrix")
     ws.merge_cells("A3:L3")
     ws["A3"] = (
         "Skill Matrix is this year's grid. On Dashboard, start with Look at: Team, Skillsets, or Individual. "
-        "The all-year Ratings sheet is hidden until you Unhide it. Sample data is included."
+        "Paste a company logo in the top-left box. The all-year Ratings sheet is hidden until you Unhide it."
     )
     ws["A3"].font = font(12, color=MUTED)
     ws["A3"].alignment = align("left", wrap=True)
@@ -1584,7 +1615,7 @@ def build_how_to(wb: Workbook) -> None:
         ws.column_dimensions[get_column_letter(col)].width = 14
     ws.sheet_view.showGridLines = False
     ws.sheet_properties.tabColor = TEAL
-    ws.freeze_panes = "A2"
+    ws.freeze_panes = "A3"
     apply_print(ws, landscape=True)
 
 
