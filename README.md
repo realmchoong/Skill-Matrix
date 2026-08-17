@@ -53,6 +53,25 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 3. Open **Skill Matrix** for this year’s crew grid.
 4. Open **Dashboard**, choose **Look at**, then From / To years.
 
+## Update in Excel (no Python)
+
+Keep using **this same workbook**. Type values in the sheets below. Do **not** paste Python, and do **not** type over formula cells on **Skill Matrix**, **Dashboard** (except the yellow dropdowns), **Data**, or **Calc**.
+
+| What you want | Where to type |
+| --- | --- |
+| Add a person | **Employees** — next yellow row: Full Name, Department, Hire Date, Status |
+| Add a skillset | **Skills** — next yellow row: Skill Name (then Category / Description) |
+| Add a department | **Lists** — next yellow row, then choose it on Employees |
+| Add a year (2035 or later) | **Years** — next yellow Year cell, in order, oldest to newest |
+| Type or change a 1–5 score | Right-click a tab → **Unhide** → **Ratings**. Type in that person’s skill row and year column. Hide Ratings when done |
+| Change Look at / years / filters | **Dashboard** — yellow dropdowns only |
+| Target rating or logo URL | **Settings** |
+| Company logo picture | **How to Use** — yellow top-left box, Insert → Pictures → **Place in Cell** |
+
+If a cell already shows a formula in the formula bar (starts with `=`), leave it. Skill Matrix and Dashboard read from Employees, Skills, Years, and Ratings automatically.
+
+Overwrite sample names and scores with your crew. Save the file as you go (`Ctrl+S` / `Cmd+S`).
+
 ## Rebuild the file (optional)
 
 Python is **not required** to use the workbook. It is only for people who maintain this repository and need to rebuild the `.xlsx` from the generator scripts.

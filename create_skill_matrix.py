@@ -1704,10 +1704,35 @@ def build_how_to(wb: Workbook) -> None:
     ws["A31"] = (
         "Microsoft 365 / Excel 2021+ is recommended (MAXIFS, SUMIFS, LOOKUP). "
         "No Python and no macros. "
-        "Ratings is hidden (Unhide from a sheet tab). Data/Calc stay hidden — do not edit those."
+        "Type only on Employees, Skills, Years, Lists, Ratings, Settings, and the yellow Dashboard dropdowns. "
+        "Do not overwrite formulas on Skill Matrix, Dashboard, Data, or Calc."
     )
     ws["A31"].font = font(10, italic=True, color=MUTED)
     ws["A31"].alignment = align("left", wrap=True)
+
+    ws.merge_cells("A34:L34")
+    ws["A34"] = "Update this file in Excel"
+    ws["A34"].font = font(14, bold=True, color=NAVY)
+
+    box(
+        ws, 35, 1, 44, 6,
+        "Where to type",
+        "Add a person — Employees, next yellow row: name, department, hire date, status.\n\n"
+        "Add a skillset — Skills, next yellow row. It appears on Skill Matrix and Dashboard.\n\n"
+        "Add a department — Lists, next yellow row, then pick it on Employees.\n\n"
+        "Add a year (2035+) — Years, next yellow row, oldest to newest.\n\n"
+        "Change target rating or logo link — Settings.",
+        NAVY,
+    )
+    box(
+        ws, 35, 7, 44, 12,
+        "Scores and what not to touch",
+        "Type 1-5 on Ratings (Unhide that tab). Filter the Employee column if you want one person.\n\n"
+        "Dashboard yellow cells are dropdowns: Look at, From / To year, Department, Skillset, Employee.\n\n"
+        "Skill Matrix and the Dashboard table are formulas. Click a result if you like, but do not type over it.\n\n"
+        "Leave Data and Calc hidden. Those sheets power the numbers.",
+        TEAL,
+    )
 
     for col in range(1, 13):
         ws.column_dimensions[get_column_letter(col)].width = 14
