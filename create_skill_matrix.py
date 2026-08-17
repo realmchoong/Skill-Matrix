@@ -62,6 +62,8 @@ GLANCE_YEAR_ROW = 3
 GLANCE_CAT_ROW = 4
 GLANCE_SKILL_ROW = 5
 GLANCE_START = 6
+YEAR_BLOCK_BANNER_ROWS = 1
+YEAR_BLOCK_HEIGHT = YEAR_BLOCK_BANNER_ROWS + NUM_EMPLOYEE_SLOTS
 GLANCE_END = GLANCE_START + NUM_EMPLOYEE_SLOTS - 1
 
 # ---------------------------------------------------------------------------
@@ -185,22 +187,28 @@ def glance_skill_col(n: int) -> int:
     return 3 + n
 
 
-def skill_matrix_rating_ref(emp_i: int, skill_i: int) -> str:
-    row = GLANCE_START + emp_i
+def year_block_banner_row(slot: int) -> int:
+    return GLANCE_START + slot * YEAR_BLOCK_HEIGHT
+
+
+def year_block_emp_row(slot: int, emp_i: int) -> int:
+    return year_block_banner_row(slot) + YEAR_BLOCK_BANNER_ROWS + emp_i
+
+
+def skill_matrix_rating_ref(emp_i: int, skill_i: int, slot: int) -> str:
+    row = year_block_emp_row(slot, emp_i)
     col = get_column_letter(glance_skill_col(skill_i + 1))
     return f"{q(SHEET_MATRIX)}!{col}{row}"
 
 
-def ratings_year_formula(emp_i: int, skill_i: int, slot: int, fallback) -> str:
-    """This calendar year follows Skill Matrix; other years keep the stored score."""
+def ratings_year_formula(emp_i: int, skill_i: int, slot: int, fallback=None) -> str:
+    """Each Ratings year column follows that year's Skill Matrix block."""
     r = matrix_row(emp_i, skill_i)
     ycol = get_column_letter(year_col(slot))
     hdr = f"{ycol}${MATRIX_HEADER_ROW}"
-    ref = skill_matrix_rating_ref(emp_i, skill_i)
-    fb = '""' if fallback in (None, "") else str(int(fallback))
+    ref = skill_matrix_rating_ref(emp_i, skill_i, slot)
     return (
-        f'=IF(OR($A{r}="",{hdr}=""),"",'
-        f'IF({hdr}=CalendarYear,IF({ref}="","",{ref}),{fb}))'
+        f'=IF(OR($A{r}="",{hdr}=""),"",IF({ref}="","",{ref}))'
     )
 
 
@@ -333,7 +341,7 @@ def style_input(cell, value=None) -> None:
     cell.font = font(12, bold=True, color=TEAL)
 
 
-def add_rating_validation(ws, cells_range: str) -> None:
+def add_rating_validation(ws, cells_range) -> None:
     dv = DataValidation(
         type="whole",
         operator="between",
@@ -348,7 +356,9 @@ def add_rating_validation(ws, cells_range: str) -> None:
     dv.promptTitle = "Skill rating"
     dv.prompt = "1 beginner · 2 basic · 3 competent · 4 proficient · 5 expert"
     ws.add_data_validation(dv)
-    dv.add(cells_range)
+    ranges = cells_range if isinstance(cells_range, (list, tuple)) else [cells_range]
+    for item in ranges:
+        dv.add(item)
 
 
 def apply_rating_cf(ws, cells_range: str) -> None:
@@ -839,7 +849,8 @@ def build_matrix(wb: Workbook) -> None:
     ws.cell(
         TITLE_ROW,
         7,
-        "This year's scores only. Compare years on the Dashboard.",
+        "Pick a year, open that year bar (the + on the left), type 1-5. "
+        "Every year is stored for Dashboard comparison.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
 
@@ -855,9 +866,8 @@ def build_matrix(wb: Workbook) -> None:
 
     ws.merge_cells("C3:L3")
     ws["C3"] = (
-        "Type 1-5 in the grid for this year. Those scores also appear on Ratings (Unhide). "
-        "Each rating is underlined, 1 (red) to 5 (green). Overall is the average. "
-        "The highest overall is highlighted. Compare other years on the Dashboard."
+        "Each year has its own grid below. Use the + / - at the left to open a year, then type 1-5. "
+        "Those scores go to Ratings and the Dashboard. Ratings are underlined, 1 (red) to 5 (green)."
     )
     ws["C3"].font = font(10, color=MUTED)
     ws["C3"].alignment = align("left")
@@ -884,6 +894,9 @@ def build_matrix(wb: Workbook) -> None:
 
     first_skill = get_column_letter(glance_skill_col(1))
     last_skill = get_column_letter(glance_skill_col(NUM_SKILL_SLOTS))
+    this_year = date.today().year
+    first_data_row = year_block_emp_row(0, 0)
+    last_data_row = year_block_emp_row(NUM_YEAR_SLOTS - 1, NUM_EMPLOYEE_SLOTS - 1)
 
     for n in range(1, NUM_SKILL_SLOTS + 1):
         col = glance_skill_col(n)
@@ -909,59 +922,93 @@ def build_matrix(wb: Workbook) -> None:
         name.border = THIN
         ws.column_dimensions[get_column_letter(col)].width = 16
 
-        for i in range(NUM_EMPLOYEE_SLOTS):
-            r = GLANCE_START + i
-            emp_row = 6 + i
-            if n == 1:
-                ws.cell(r, 1, f'=IF({q(SHEET_EMP)}!B{emp_row}="","",{q(SHEET_EMP)}!B{emp_row})')
-                ws.cell(r, 2, f'=IF(A{r}="","",{q(SHEET_EMP)}!C{emp_row})')
-                overall = ws.cell(
-                    r,
-                    3,
-                    f'=IF($A{r}="","",IFERROR(ROUND(AVERAGE({first_skill}{r}:{last_skill}{r}),2),""))',
-                )
-                overall.number_format = "0.00"
-                overall.font = font(12, bold=True)
-                overall.alignment = align("center")
-                overall.border = THIN
-                ws.cell(r, 1).font = font(11, bold=True)
-                ws.cell(r, 2).font = font(10, color=MUTED)
-                ws.cell(r, 1).border = THIN
-                ws.cell(r, 2).border = THIN
-                ws.row_dimensions[r].height = 22
+    ws.sheet_properties.outlinePr.summaryBelow = False
+    rating_ranges = []
+    for slot in range(NUM_YEAR_SLOTS):
+        banner = year_block_banner_row(slot)
+        emp_start = year_block_emp_row(slot, 0)
+        emp_end = year_block_emp_row(slot, NUM_EMPLOYEE_SLOTS - 1)
+        year = PRESET_YEARS[slot] if slot < len(PRESET_YEARS) else None
+        years_cell = f"{q(SHEET_YEARS)}!B{8 + slot}"
 
-            this_year = date.today().year
-            value = rating_for(i, n - 1, this_year)
-            cell = ws.cell(r, col, value if value is not None else "")
-            cell.alignment = align("center")
-            cell.border = THIN
-            cell.font = font(12, bold=True)
+        ws.merge_cells(start_row=banner, start_column=1, end_row=banner, end_column=last_col)
+        banner_cell = ws.cell(
+            banner,
+            1,
+            f'=IF({years_cell}="","","Year "&{years_cell}&"  —  click + on the left if this row is collapsed, then type 1-5")',
+        )
+        banner_cell.font = font(12, bold=True, color=WHITE)
+        banner_cell.fill = fill(TEAL)
+        banner_cell.alignment = align("left")
+        for c in range(1, last_col + 1):
+            ws.cell(banner, c).fill = fill(TEAL)
+            ws.cell(banner, c).border = THIN
+        ws.row_dimensions[banner].height = 22
+        ws.conditional_formatting.add(
+            f"A{banner}:{get_column_letter(last_col)}{banner}",
+            FormulaRule(
+                formula=[f"AND({years_cell}<>\"\",{years_cell}=ViewYear)"],
+                fill=fill(GOLD),
+                font=font(12, bold=True, color=NAVY),
+            ),
+        )
 
-    apply_rating_cf(
-        ws,
-        f"{first_skill}{GLANCE_START}:{last_skill}{GLANCE_END}",
-    )
-    add_rating_validation(ws, f"{first_skill}{GLANCE_START}:{last_skill}{GLANCE_END}")
-    apply_blank_input_cf(ws, f"{first_skill}{GLANCE_START}:{last_skill}{GLANCE_END}")
-    ws.cell(GLANCE_START, glance_skill_col(1)).comment = Comment(
-        "Type 1-5 here for this year. The same number appears in this year's column on Ratings.",
+        for emp_i in range(NUM_EMPLOYEE_SLOTS):
+            r = year_block_emp_row(slot, emp_i)
+            emp_row = 6 + emp_i
+            ws.cell(r, 1, f'=IF({q(SHEET_EMP)}!B{emp_row}="","",{q(SHEET_EMP)}!B{emp_row})')
+            ws.cell(r, 2, f'=IF(A{r}="","",{q(SHEET_EMP)}!C{emp_row})')
+            overall = ws.cell(
+                r,
+                3,
+                f'=IF($A{r}="","",IFERROR(ROUND(AVERAGE({first_skill}{r}:{last_skill}{r}),2),""))',
+            )
+            overall.number_format = "0.00"
+            overall.font = font(12, bold=True)
+            overall.alignment = align("center")
+            overall.border = THIN
+            ws.cell(r, 1).font = font(11, bold=True)
+            ws.cell(r, 2).font = font(10, color=MUTED)
+            ws.cell(r, 1).border = THIN
+            ws.cell(r, 2).border = THIN
+            ws.row_dimensions[r].height = 22
+            ws.row_dimensions[r].outlineLevel = 1
+            if year != this_year:
+                ws.row_dimensions[r].hidden = True
+
+            for n in range(1, NUM_SKILL_SLOTS + 1):
+                col = glance_skill_col(n)
+                value = rating_for(emp_i, n - 1, year) if year else None
+                cell = ws.cell(r, col, value if value is not None else "")
+                cell.alignment = align("center")
+                cell.border = THIN
+                cell.font = font(12, bold=True)
+
+        rating_ranges.append(f"{first_skill}{emp_start}:{last_skill}{emp_end}")
+        top_formula = (
+            f'AND(ISNUMBER($C{emp_start}),$C{emp_start}=MAX($C${emp_start}:$C${emp_end}))'
+        )
+        for rng in (f"A{emp_start}:A{emp_end}", f"C{emp_start}:C{emp_end}"):
+            rule = FormulaRule(
+                formula=[top_formula],
+                fill=fill("FFE08A"),
+                font=font(12, bold=True, color=NAVY),
+            )
+            rule.stopIfTrue = True
+            ws.conditional_formatting.add(rng, rule)
+
+    for rng in rating_ranges:
+        apply_rating_cf(ws, rng)
+        apply_blank_input_cf(ws, rng)
+    add_rating_validation(ws, rating_ranges)
+    ws.cell(year_block_emp_row(PRESET_YEARS.index(this_year) if this_year in PRESET_YEARS else 0, 0), glance_skill_col(1)).comment = Comment(
+        "Type 1-5 here. Open another year with the + on the left. Every year is stored for the Dashboard.",
         "Skill Matrix",
         width=280,
-        height=70,
+        height=80,
     )
-    top_formula = (
-        f'AND(ISNUMBER($C{GLANCE_START}),$C{GLANCE_START}=MAX($C${GLANCE_START}:$C${GLANCE_END}))'
-    )
-    for rng in (f"A{GLANCE_START}:A{GLANCE_END}", f"C{GLANCE_START}:C{GLANCE_END}"):
-        rule = FormulaRule(
-            formula=[top_formula],
-            fill=fill("FFE08A"),
-            font=font(12, bold=True, color=NAVY),
-        )
-        rule.stopIfTrue = True
-        ws.conditional_formatting.add(rng, rule)
 
-    legend_row = GLANCE_END + 2
+    legend_row = last_data_row + 2
     ws.cell(legend_row, 1, "Rating underline").font = font(10, bold=True, color=MUTED)
     for score, color in RATING_INK.items():
         cell = ws.cell(legend_row, score + 1, score)
@@ -972,8 +1019,7 @@ def build_matrix(wb: Workbook) -> None:
     ws.cell(
         legend_row,
         7,
-        "1 beginner  to  5 expert, underlined.  Type 1-5 in the grid for this year.  "
-        "Gold name = highest overall.",
+        "1 beginner  to  5 expert.  Open a year, type 1-5, compare years on the Dashboard.",
     ).font = font(10, italic=True, color=MUTED)
 
     ws.column_dimensions["A"].width = 20
@@ -982,7 +1028,7 @@ def build_matrix(wb: Workbook) -> None:
     ws.row_dimensions[GLANCE_CAT_ROW].height = 18
     ws.row_dimensions[GLANCE_SKILL_ROW].height = 36
     ws.row_dimensions[GLANCE_YEAR_ROW].height = 28
-    ws.freeze_panes = f"D{GLANCE_START}"
+    ws.freeze_panes = f"D{first_data_row}"
     ws.sheet_view.showGridLines = False
     ws.sheet_view.zoomScale = 100
     ws.sheet_properties.tabColor = NAVY
@@ -1005,8 +1051,8 @@ def build_ratings(wb: Workbook) -> None:
     ws.cell(
         TITLE_ROW,
         9,
-        "This year's 1-5 scores are typed on Skill Matrix and show up here. "
-        "Type older years in those year columns. Hide this tab when you are done.",
+        "Each year's 1-5 is typed on Skill Matrix (open that year bar). This sheet follows those grids. "
+        "Hide this tab when you are done.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
 
@@ -1014,8 +1060,8 @@ def build_ratings(wb: Workbook) -> None:
     ws.cell(
         MATRIX_INFO_ROW,
         1,
-        '="This year ("&CalendarYear&") follows Skill Matrix. Type older years in their columns. '
-        'Latest year with ratings: "&IF(LatestYear="","-",LatestYear)&'
+        '="Each year column follows Skill Matrix. Current calendar year: "&CalendarYear&'
+        '". Latest year with ratings: "&IF(LatestYear="","-",LatestYear)&'
         '". Filter the Employee column to focus on one person."',
     ).font = font(11, color=MUTED)
 
@@ -1215,6 +1261,12 @@ def build_calc(wb: Workbook) -> None:
     add_defined_name(wb, "DeptFilter", f"{q(SHEET_DASH)}!$B$6")
     add_defined_name(wb, "SkillSetFilter", f"{q(SHEET_DASH)}!$D$6")
     add_defined_name(wb, "EmpFilter", f"{q(SHEET_DASH)}!$F$6")
+
+    year_dv = DataValidation(type="list", formula1="=YearList", allow_blank=False)
+    year_dv.promptTitle = "Year"
+    year_dv.prompt = "Pick a year, then open that year bar on Skill Matrix and type 1-5."
+    wb[SHEET_MATRIX].add_data_validation(year_dv)
+    year_dv.add("B3")
 
     view_dv = DataValidation(type="list", formula1="=ViewModeList", allow_blank=False)
     view_dv.promptTitle = "Look at"
@@ -1653,12 +1705,11 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 5, 1, 14, 6,
         "1. This year's crew grid",
-        "Open Skill Matrix. Each row is one person. Each column is one skillset. "
-        "Type 1-5 in the grid for this year. Those scores also appear on Ratings. "
-        "Ratings are underlined, 1 (red) to 5 (green). Overall is that person's average. "
-        "The highest overall is highlighted in gold.\n\n"
-        "Only this calendar year is shown. Compare other years on the Dashboard.\n\n"
-        "To edit an older year: right-click a sheet tab, Unhide, choose Ratings.",
+        "Open Skill Matrix. Pick a year at the top, open that year with the + on the left, type 1-5. "
+        "Every year is stored for the Dashboard. "
+        "Ratings are underlined, 1 (red) to 5 (green). Overall is that person's average for that year. "
+        "The highest overall in the open year is highlighted in gold.\n\n"
+        "The yellow Year box starts on today's calendar year. Other years are collapsed until you open them.",
         NAVY,
     )
     box(
@@ -1681,10 +1732,10 @@ def build_how_to(wb: Workbook) -> None:
     )
     box(
         ws, 16, 7, 24, 12,
-        "4. This year on Skill Matrix; older years on Ratings",
-        "Type this year's 1-5 on Skill Matrix. Ratings shows that same column automatically.\n\n"
-        "Older years: right-click any sheet tab > Unhide > Ratings, then type in that year column. Hide it the same way when finished.\n\n"
-        "Years 2023-2034 are already columns. To add 2035 or later, type it on Years in the next yellow row.",
+        "4. Switch years and store scores",
+        "On Skill Matrix, pick a year (yellow box). Click + at the left of that year bar to open the grid. Type 1-5.\n\n"
+        "Those scores are stored for Dashboard From / To comparison. Ratings (hidden) follows each year grid.\n\n"
+        "Years 2023-2034 are already there. To add 2035 or later, type it on Years in the next yellow row.",
         TEAL,
     )
 
@@ -1712,8 +1763,8 @@ def build_how_to(wb: Workbook) -> None:
     ws["A31"] = (
         "Microsoft 365 / Excel 2021+ is recommended (MAXIFS, SUMIFS, LOOKUP). "
         "No Python and no macros. "
-        "Type this year's 1-5 on Skill Matrix. Type older years on Ratings (Unhide that tab). "
-        "Do not overwrite name/overall formulas on Skill Matrix, or the Dashboard table, Data, or Calc."
+        "Type 1-5 on Skill Matrix (open the year you want). "
+        "Do not overwrite name/overall formulas, or the Dashboard table, Data, or Calc."
     )
     ws["A31"].font = font(10, italic=True, color=MUTED)
     ws["A31"].alignment = align("left", wrap=True)
@@ -1735,8 +1786,7 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 35, 7, 44, 12,
         "Scores and what not to touch",
-        "Type 1-5 on Skill Matrix for this year. Those scores appear on Ratings.\n\n"
-        "Older years: Unhide Ratings and type in that year column.\n\n"
+        "Type this year's 1-5 on Skill Matrix. Open another year with the + on the left and type there too.\n\n"
         "Dashboard yellow cells are dropdowns: Look at, From / To year, Department, Skillset, Employee.\n\n"
         "Leave Data and Calc hidden. Those sheets power the numbers.\n\n"
         "New layout from a download: copy your Employees, Skills, Lists, Years, and Ratings numbers into the new file (Paste Special > Values). Then use the new file.",

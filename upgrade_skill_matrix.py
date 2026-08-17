@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 import re
 
@@ -19,6 +18,7 @@ from create_skill_matrix import (
     NUM_SKILL_SLOTS,
     NUM_YEAR_SLOTS,
     NAV_SHEETS,
+    PRESET_YEARS,
     SHEET_HOW,
     SHEET_DASH,
     SHEET_EMP,
@@ -33,6 +33,7 @@ from create_skill_matrix import (
     glance_skill_col,
     matrix_row,
     ratings_year_formula,
+    year_block_emp_row,
     year_col,
 )
 
@@ -51,7 +52,7 @@ def copy_user_data(source_path: str | Path, dest: Workbook) -> None:
     years = _read_years(src[SHEET_YEARS]) if SHEET_YEARS in src.sheetnames else []
     departments = _read_departments(src[SHEET_LISTS]) if SHEET_LISTS in src.sheetnames else []
     ratings = _read_ratings(src, employees, skills, years)
-    ratings.update(_read_skill_matrix_scores(src, employees, skills))
+    ratings.update(_read_skill_matrix_scores(src, employees, skills, years))
     settings = _read_settings(src)
     dashboard = _read_dashboard(src)
 
@@ -282,24 +283,33 @@ def _read_ratings(src: Workbook, employees: list, skills: list, years: list) -> 
     return ratings
 
 
-def _read_skill_matrix_scores(src: Workbook, employees: list, skills: list) -> dict[tuple[str, str, int], int]:
-    """Numbers typed on Skill Matrix (this year) override Ratings for the calendar year."""
+def _read_skill_matrix_scores(
+    src: Workbook, employees: list, skills: list, years: list | None = None
+) -> dict[tuple[str, str, int], int]:
+    """Numbers typed on Skill Matrix year blocks (and older single-grid files)."""
     if SHEET_MATRIX not in src.sheetnames:
         return {}
     ws = src[SHEET_MATRIX]
-    this_year = date.today().year
+    year_list = [y[0] for y in years] if years else list(PRESET_YEARS)
     found: dict[tuple[str, str, int], int] = {}
-    for emp_i, emp in enumerate(employees[:NUM_EMPLOYEE_SLOTS]):
-        for skill_i, skill in enumerate(skills[:NUM_SKILL_SLOTS]):
-            value = ws.cell(GLANCE_START + emp_i, glance_skill_col(skill_i + 1)).value
-            if _is_formula(value) or value in (None, ""):
-                continue
-            try:
-                rating = int(value)
-            except (TypeError, ValueError):
-                continue
-            if 1 <= rating <= 5:
-                found[(emp[1].lower(), skill[0].lower(), this_year)] = rating
+    for slot in range(NUM_YEAR_SLOTS):
+        year = year_list[slot] if slot < len(year_list) else (PRESET_YEARS[slot] if slot < len(PRESET_YEARS) else None)
+        if not year:
+            continue
+        for emp_i, emp in enumerate(employees[:NUM_EMPLOYEE_SLOTS]):
+            for skill_i, skill in enumerate(skills[:NUM_SKILL_SLOTS]):
+                col = glance_skill_col(skill_i + 1)
+                value = ws.cell(year_block_emp_row(slot, emp_i), col).value
+                if (_is_formula(value) or value in (None, "")) and slot == 0:
+                    value = ws.cell(GLANCE_START + emp_i, col).value
+                if _is_formula(value) or value in (None, ""):
+                    continue
+                try:
+                    rating = int(value)
+                except (TypeError, ValueError):
+                    continue
+                if 1 <= rating <= 5:
+                    found[(emp[1].lower(), skill[0].lower(), int(year))] = rating
     return found
 
 
@@ -428,7 +438,6 @@ def _write_ratings(
         except (TypeError, ValueError):
             years.append(None)
 
-    this_year = date.today().year
     for emp_i in range(NUM_EMPLOYEE_SLOTS):
         for skill_i in range(NUM_SKILL_SLOTS):
             row = matrix_row(emp_i, skill_i)
@@ -438,11 +447,10 @@ def _write_ratings(
                 col = year_col(slot)
                 year = years[slot] if slot < len(years) else None
                 value = ratings.get((emp, skill, year)) if emp and skill and year else None
-                if year == this_year:
-                    matrix_ws.cell(GLANCE_START + emp_i, glance_skill_col(skill_i + 1)).value = (
-                        value if value is not None else ""
-                    )
-                ratings_ws.cell(row, col).value = ratings_year_formula(emp_i, skill_i, slot, value)
+                matrix_ws.cell(year_block_emp_row(slot, emp_i), glance_skill_col(skill_i + 1)).value = (
+                    value if value is not None else ""
+                )
+                ratings_ws.cell(row, col).value = ratings_year_formula(emp_i, skill_i, slot)
 
 
 def _write_settings(dest: Workbook, settings: dict) -> None:
