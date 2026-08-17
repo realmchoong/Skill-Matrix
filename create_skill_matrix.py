@@ -21,8 +21,6 @@ NUM_SKILL_SLOTS = 16
 NUM_EMPLOYEE_SLOTS = 16
 NUM_YEAR_SLOTS = 16
 NUM_LIST_SLOTS = 16
-NUM_SET_SLOTS = 40
-MAX_SET_SKILLS = 6
 
 NAV_ROW = 1
 TITLE_ROW = 2
@@ -42,7 +40,6 @@ SHEET_EMP = "Employees"
 SHEET_SKILLS = "Skills"
 SHEET_YEARS = "Years"
 SHEET_LISTS = "Lists"
-SHEET_SETS = "Skill Sets"
 SHEET_SETTINGS = "Settings"
 SHEET_DATA = "Data"
 SHEET_CALC = "Calc"
@@ -55,7 +52,6 @@ NAV_SHEETS = [
     SHEET_SKILLS,
     SHEET_YEARS,
     SHEET_LISTS,
-    SHEET_SETS,
     SHEET_SETTINGS,
 ]
 
@@ -137,11 +133,6 @@ SKILLS = [
 ]
 
 DEPARTMENTS = ["Vision", "Sound", "Lighting", "Staging"]
-
-# Each skillset is that skill at a competent (3) minimum. Add more on the Skill Sets sheet.
-SKILL_SETS = [
-    (name, desc, [(name, 3)]) for _sid, name, _cat, desc in SKILLS
-]
 
 # (2025, 2026) in SKILLS order
 BASE_2526 = [
@@ -412,7 +403,7 @@ def build_lists(wb: Workbook) -> None:
     ws["A3"] = (
         "Departments: Vision, Sound, Lighting, Staging. "
         "Add another in the next yellow row, then choose it on Employees. "
-        "To add a skillset, use the Skill Sets sheet. To add a person, use Employees."
+        "To add a skillset, use Skills. To add a person, use Employees."
     )
     ws["A3"].font = font(11, color=MUTED, italic=True)
     ws["A3"].alignment = align("left", wrap=True)
@@ -683,9 +674,9 @@ def build_skills(wb: Workbook) -> None:
     style_title(ws["A2"], "Skillsets")
     ws.merge_cells("A3:D3")
     ws["A3"] = (
-        "These are the skillsets everyone is rated on. Add a skillset in the next yellow row. "
-        "Every employee gets a rating row for it. Also add the name on Skill Sets if you want "
-        "the Dashboard to rank who can do that job."
+        "These are the skillsets everyone is rated on, and the list Dashboard uses when you Look at Skillsets. "
+        "Add a skillset in the next yellow row. Every employee gets a rating row for it, "
+        "and it appears in the Dashboard Skillsets dropdown."
     )
     ws["A3"].font = font(11, color=MUTED, italic=True)
     ws["A3"].alignment = align("left", wrap=True)
@@ -715,7 +706,7 @@ def build_skills(wb: Workbook) -> None:
         ws.row_dimensions[r].height = 22
 
     ws.cell(6 + len(SKILLS), 2).comment = Comment(
-        "Type a new skillset name here. It appears on the Skill Matrix for every employee.",
+        "Type a new skillset name here. It appears on the Skill Matrix and in the Dashboard Skillsets list.",
         "Skill Matrix",
         width=260,
         height=70,
@@ -743,103 +734,6 @@ def build_skills(wb: Workbook) -> None:
     ws.freeze_panes = "A6"
     ws.sheet_properties.tabColor = TEAL
     apply_print(ws, landscape=False)
-
-
-# ===========================================================================
-# Skill Sets
-# ===========================================================================
-def build_skill_sets(wb: Workbook) -> None:
-    ws = wb.create_sheet(SHEET_SETS)
-    add_navigation(ws, SHEET_SETS, 8)
-    ws.merge_cells("A2:H2")
-    style_title(ws["A2"], "Skill sets")
-    ws.merge_cells("A3:H3")
-    ws["A3"] = (
-        "Add a skillset here so the Dashboard can rank who can do that job. "
-        "Type a new name in the yellow Skill set name column, then add a row with that same name "
-        "and one skill (dropdown) per row. Sample skillsets match the ten vision skillsets."
-    )
-    ws["A3"].font = font(11, color=MUTED, italic=True)
-    ws["A3"].alignment = align("left", wrap=True)
-    ws.row_dimensions[3].height = 40
-
-    ws["A5"] = "Skill set"
-    ws["B5"] = "Skill"
-    ws["C5"] = "Minimum rating"
-    for col in range(1, 4):
-        c = ws.cell(5, col)
-        c.font = font(11, bold=True, color=WHITE)
-        c.fill = fill(NAVY)
-        c.alignment = align("center")
-
-    row = 6
-    for set_name, _desc, skills in SKILL_SETS:
-        for skill, minimum in skills:
-            ws.cell(row, 1, set_name).border = THIN
-            ws.cell(row, 2, skill).border = THIN
-            cell = ws.cell(row, 3, minimum)
-            cell.border = THIN
-            cell.alignment = align("center")
-            row += 1
-    while row < 6 + NUM_SET_SLOTS:
-        for c in range(1, 4):
-            cell = ws.cell(row, c, "")
-            cell.border = THIN
-            cell.fill = fill(YELLOW)
-        row += 1
-
-    first_empty = 6 + sum(len(s[2]) for s in SKILL_SETS)
-    ws.cell(first_empty, 1).comment = Comment(
-        "Type a new skillset name here, then add a matching row on the left (same name + a skill).",
-        "Skill Matrix",
-        width=260,
-        height=70,
-    )
-
-    skill_dv = DataValidation(type="list", formula1="=SkillNameList", allow_blank=True)
-    skill_dv.prompt = "Choose a skill from the Skills catalog"
-    skill_dv.promptTitle = "Skill"
-    ws.add_data_validation(skill_dv)
-    skill_dv.add(f"B6:B{5 + NUM_SET_SLOTS}")
-
-    min_dv = DataValidation(type="whole", operator="between", formula1="1", formula2="5", allow_blank=True)
-    ws.add_data_validation(min_dv)
-    min_dv.add(f"C6:C{5 + NUM_SET_SLOTS}")
-
-    add_table(ws, "tblSkillSetSkills", f"A5:C{5 + NUM_SET_SLOTS}")
-
-    # Unique set names + descriptions for the dashboard dropdown
-    ws["E5"] = "Skill set name"
-    ws["F5"] = "Description"
-    for col in range(5, 7):
-        c = ws.cell(5, col)
-        c.font = font(11, bold=True, color=WHITE)
-        c.fill = fill(NAVY)
-    for i, (name, desc, _skills) in enumerate(SKILL_SETS):
-        ws.cell(6 + i, 5, name).border = THIN
-        ws.cell(6 + i, 6, desc).border = THIN
-    name_slots = 24
-    for i in range(len(SKILL_SETS), name_slots):
-        ws.cell(6 + i, 5, "").fill = fill(YELLOW)
-        ws.cell(6 + i, 6, "").fill = fill(YELLOW)
-        ws.cell(6 + i, 5).border = THIN
-        ws.cell(6 + i, 6).border = THIN
-    add_table(ws, "tblSkillSetNames", f"E5:F{5 + name_slots}")
-    add_defined_name(
-        wb,
-        "SkillSetList",
-        f"{q(SHEET_SETS)}!$E$6:INDEX({q(SHEET_SETS)}!$E$6:$E${5 + name_slots},COUNTA({q(SHEET_SETS)}!$E$6:$E${5 + name_slots}))",
-    )
-
-    ws.column_dimensions["A"].width = 26
-    ws.column_dimensions["B"].width = 28
-    ws.column_dimensions["C"].width = 18
-    ws.column_dimensions["D"].width = 4
-    ws.column_dimensions["E"].width = 32
-    ws.column_dimensions["F"].width = 40
-    ws.freeze_panes = "A6"
-    ws.sheet_properties.tabColor = GOLD
-    apply_print(ws, landscape=True)
 
 
 # ===========================================================================
@@ -1200,7 +1094,7 @@ def build_calc(wb: Workbook) -> None:
     add_defined_name(
         wb,
         "SkillSetFilter",
-        f'IF(ViewMode="Skillsets",DashContext,"{SKILL_SETS[0][0]}")',
+        f'IF(ViewMode="Skillsets",DashContext,"{SKILLS[0][1]}")',
     )
     add_defined_name(
         wb,
@@ -1211,7 +1105,7 @@ def build_calc(wb: Workbook) -> None:
     ws["A3"] = "FilterListName"
     ws["B3"] = (
         '=IF(ViewMode="Team","DeptFilterList",'
-        'IF(ViewMode="Skillsets","SkillSetList","EmployeeList"))'
+        'IF(ViewMode="Skillsets","SkillNameList","EmployeeList"))'
     )
     add_defined_name(wb, "FilterListName", f"{q(SHEET_CALC)}!$B$3")
 
@@ -1290,91 +1184,52 @@ def build_calc(wb: Workbook) -> None:
             f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashToYear),"")))',
         )
 
-    # Skill-set required skills (contiguous rows with the same set name)
-    sets_a = f"{q(SHEET_SETS)}!$A$6:$A${5 + NUM_SET_SLOTS}"
-    sets_b = f"{q(SHEET_SETS)}!$B$6:$B${5 + NUM_SET_SLOTS}"
-    sets_c = f"{q(SHEET_SETS)}!$C$6:$C${5 + NUM_SET_SLOTS}"
-    ws["L4"] = "SetSkill"
-    ws["L5"] = "Min"
-    for k in range(MAX_SET_SKILLS):
-        col = 13 + k  # M onwards
-        ws.cell(
-            4,
-            col,
-            f'=IFERROR(IF(INDEX({sets_a},MATCH(SkillSetFilter,{sets_a},0)+{k})=SkillSetFilter,'
-            f"INDEX({sets_b},MATCH(SkillSetFilter,{sets_a},0)+{k}),\"\"),\"\")",
-        )
-        ws.cell(
-            5,
-            col,
-            f'=IFERROR(IF(INDEX({sets_a},MATCH(SkillSetFilter,{sets_a},0)+{k})=SkillSetFilter,'
-            f"INDEX({sets_c},MATCH(SkillSetFilter,{sets_a},0)+{k}),\"\"),\"\")",
-        )
-
-    # Per-employee skill-set scores
+    # Rank everyone on the selected skill (To year), with From year for comparison
+    last_emp = 7 + NUM_EMPLOYEE_SLOTS
     ws["L7"] = "Employee"
-    ws["M7"] = "Score"
-    ws["N7"] = "VsLast"
-    ws["O7"] = "Coverage"
-    ws["P7"] = "MetMin"
+    ws["M7"] = "ToYear"
+    ws["N7"] = "FromYear"
     ws["Q7"] = "Rank"
-    skill_cols = [get_column_letter(13 + k) for k in range(MAX_SET_SKILLS)]
-    latest_helpers = [get_column_letter(21 + k) for k in range(MAX_SET_SKILLS)]  # U-Z
-    prev_helpers = [get_column_letter(27 + k) for k in range(MAX_SET_SKILLS)]  # AA-AF
-    ws["U7"] = "Latest1"
-    ws["AA7"] = "Prev1"
     for emp_i in range(NUM_EMPLOYEE_SLOTS):
         r = 8 + emp_i
         emp_row = 6 + emp_i
         ws.cell(r, 12, f'=IF({q(SHEET_EMP)}!B{emp_row}="","",{q(SHEET_EMP)}!B{emp_row})')
-        for k, scol in enumerate(skill_cols):
-            ws.cell(
-                r,
-                21 + k,
-                f'=IF(OR(L{r}="",{scol}$4=""),"",IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,DashToYear)=0,"",'
-                f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,DashToYear)))",
-            )
-            ws.cell(
-                r,
-                27 + k,
-                f'=IF(OR(L{r}="",{scol}$4="",DashFromYear=""),"",IF(SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,DashFromYear)=0,"",'
-                f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,{scol}$4,DataYear,DashFromYear)))",
-            )
-        ws.cell(r, 13, f'=IF(L{r}="","",IFERROR(ROUND(AVERAGE({latest_helpers[0]}{r}:{latest_helpers[-1]}{r}),2),""))')
+        ws.cell(
+            r,
+            13,
+            f'=IF(OR(L{r}="",SkillSetFilter="",DashToYear=""),"",'
+            f'IF(COUNTIFS(DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashToYear,DataRating,">=1")=0,"",'
+            f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashToYear)))",
+        )
         ws.cell(
             r,
             14,
-            f'=IF(OR(L{r}="",M{r}="",DashFromYear=""),"",IFERROR(ROUND(M{r}-AVERAGE({prev_helpers[0]}{r}:{prev_helpers[-1]}{r}),2),""))',
-        )
-        ws.cell(
-            r,
-            15,
-            f'=IF(L{r}="","",COUNT({latest_helpers[0]}{r}:{latest_helpers[-1]}{r})&"/"&COUNTA({skill_cols[0]}$4:{skill_cols[-1]}$4))',
-        )
-        met_bits = "+".join(
-            f'IF(OR({scol}$4="",{scol}$5="",{latest_helpers[k]}{r}=""),0,IF({latest_helpers[k]}{r}>={scol}$5,1,0))'
-            for k, scol in enumerate(skill_cols)
-        )
-        ws.cell(
-            r,
-            16,
-            f'=IF(L{r}="","",({met_bits})&"/"&COUNT({skill_cols[0]}$5:{skill_cols[-1]}$5))',
+            f'=IF(OR(L{r}="",SkillSetFilter="",DashFromYear=""),"",'
+            f'IF(COUNTIFS(DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashFromYear,DataRating,">=1")=0,"",'
+            f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashFromYear)))",
         )
         ws.cell(
             r,
             17,
-            f'=IF(OR(L{r}="",M{r}=""),"",RANK(M{r},$M$8:$M${7 + NUM_EMPLOYEE_SLOTS},0)+COUNTIF($M$8:M{r},M{r})-1)',
+            f'=IF(OR(L{r}="",M{r}=""),"",RANK(M{r},$M$8:$M${last_emp},0)+COUNTIF($M$8:M{r},M{r})-1)',
         )
         ws.cell(r, 13).number_format = "0.00"
-        ws.cell(r, 14).number_format = "+0.00;-0.00;0.00"
+        ws.cell(r, 14).number_format = "0.00"
 
-    # Ranked output for chart (fixed 16 rows)
     ws["S7"] = "RankedEmployee"
     ws["T7"] = "RankedScore"
     for i in range(NUM_EMPLOYEE_SLOTS):
         r = 8 + i
-        ws.cell(r, 19, f'=IFERROR(INDEX($L$8:$L${7 + NUM_EMPLOYEE_SLOTS},MATCH({i + 1},$Q$8:$Q${7 + NUM_EMPLOYEE_SLOTS},0)),"")')
-        ws.cell(r, 20, f'=IFERROR(INDEX($M$8:$M${7 + NUM_EMPLOYEE_SLOTS},MATCH({i + 1},$Q$8:$Q${7 + NUM_EMPLOYEE_SLOTS},0)),"")')
+        ws.cell(
+            r,
+            19,
+            f'=IFERROR(INDEX($L$8:$L${last_emp},MATCH({i + 1},$Q$8:$Q${last_emp},0)),"")',
+        )
+        ws.cell(
+            r,
+            20,
+            f'=IFERROR(INDEX($M$8:$M${last_emp},MATCH({i + 1},$Q$8:$Q${last_emp},0)),"")',
+        )
         ws.cell(r, 20).number_format = "0.00"
 
     ws["AH4"] = "ChartCat"
@@ -1406,7 +1261,7 @@ def build_dashboard(wb: Workbook) -> None:
     ws.merge_cells("A3:L3")
     ws["A3"] = (
         "Start by choosing what to look at. Team is year-on-year overall ratings. "
-        "Skillsets compares everyone on that skillset and names the best candidate for the job. "
+        "Skillsets ranks everyone on a skill from the Skills sheet and names the best candidate for the job. "
         "Individual is one person vs themselves."
     )
     ws["A3"].font = font(11, italic=True, color=MUTED)
@@ -1666,8 +1521,7 @@ def build_how_to(wb: Workbook) -> None:
         ws, 16, 1, 24, 6,
         "3. Add people and skillsets",
         "Employees — next yellow row. Type the name, pick Department (Vision, Sound, Lighting, Staging), fill Hire date.\n\n"
-        "Skillsets — next yellow row on Skills. Every person gets a rating row for the new skillset.\n\n"
-        "Skill Sets — add the name in the yellow Skill set name column, then a matching row (same name + skill).\n\n"
+        "Skillsets — next yellow row on Skills. Every person gets a rating row, and Dashboard can rank who is strongest on it.\n\n"
         "Lists — departments only.",
         "3D5A80",
     )
@@ -1729,7 +1583,6 @@ def main() -> None:
     build_skills(wb)
     build_years(wb)
     build_lists(wb)
-    build_skill_sets(wb)
     build_settings(wb)
     build_data(wb)
     build_calc(wb)
@@ -1743,7 +1596,6 @@ def main() -> None:
         SHEET_SKILLS,
         SHEET_YEARS,
         SHEET_LISTS,
-        SHEET_SETS,
         SHEET_SETTINGS,
         SHEET_DATA,
         SHEET_CALC,

@@ -20,7 +20,7 @@ After you change Look at, pick the yellow **Department / Skillset / Employee** c
 
 Broadcast Camera Operation, PTZ Cameras Operation, Shading / CCU, ATEM Vision Switching, Barco Vision Switching, Camera Switching, Content Operation, Systems Tech, Technical Setup, Live Streaming.
 
-Add more: yellow row on **Skills**, then the name on **Skill Sets**.
+Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in the Dashboard Skillsets list.
 
 ## Sheets
 
@@ -30,10 +30,9 @@ Add more: yellow row on **Skills**, then the name on **Skill Sets**.
 | **Skill Matrix** | Whole crew, **one year** (this calendar year) |
 | **Dashboard** | Look at Team, Skillsets, or Individual |
 | **Employees** | Add a person in the next yellow row |
-| **Skills** | Skillset catalog |
+| **Skills** | Skillset catalog (ratings and Dashboard ranking) |
 | **Years** | Year list |
 | **Lists** | Departments |
-| **Skill Sets** | Names for Dashboard ranking |
 | **Settings** | Target rating (default 3) |
 | **Ratings** (hidden) | Type 1–5 for any year. Recall: right-click a tab → **Unhide** → Ratings. Hide it again when done. |
 
