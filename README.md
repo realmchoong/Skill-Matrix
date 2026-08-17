@@ -1,6 +1,6 @@
 # Employee Skill Matrix
 
-An Excel workbook for a **live-event vision operating team**. Rate people from **1 (beginner) to 5 (expert)**. **Skill Matrix** is this year’s crew grid. **Dashboard** starts with **Look at**: Team, Skillsets, or Individual.
+An Excel workbook for a **live-event vision operating team**. Rate people from **0 (not trained) to 5 (expert)**. **Skill Matrix** is the crew grid by year. **Dashboard** starts with **Look at**: Team, Skillsets, or Individual.
 
 **You only need Excel.** Do not install Python. There are **no macros**.
 
@@ -36,8 +36,8 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 
 | Sheet | What it is for |
 | --- | --- |
-| **How to Use** | Walkthrough and the 1–5 scale |
-| **Skill Matrix** | Crew grid **by year**. Open a year, type **1–5**. Stored for Dashboard |
+| **How to Use** | Walkthrough and the 0–5 scale |
+| **Skill Matrix** | Crew grid **by year**. Open a year, type **0–5**. Stored for Dashboard |
 | **Dashboard** | Look at Team, Skillsets, or Individual |
 | **Employees** | Add a person in the next yellow row (fill clears when you type) |
 | **Skills** | Skillset catalog (ratings and Dashboard ranking) |
@@ -49,7 +49,7 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 ## Rate a skillset
 
 1. Open **Skill Matrix**. Pick the year (yellow box). Click **+** at the left of that year bar if it is collapsed.
-2. Type **1–5** in that person’s skill cell. Empty cells are yellow until you type.
+2. Type **0–5** in that person’s skill cell. Empty cells are yellow until you type.
 3. Repeat for other years. Dashboard From / To uses every year you entered.
 4. Open **Dashboard**, choose **Look at**, then From / To years.
 
@@ -63,7 +63,7 @@ Keep using **this same workbook**. Type values in the sheets below. Do **not** p
 | Add a skillset | **Skills** — next yellow row: Skill Name (then Category / Description) |
 | Add a department | **Lists** — next yellow row, then choose it on Employees |
 | Add a year (2035 or later) | **Years** — next yellow Year cell, in order, oldest to newest |
-| Type a 1–5 for any year | **Skill Matrix** — pick the year, open that year bar, type in the grid |
+| Type a 0–5 for any year | **Skill Matrix** — pick the year, open that year bar, type in the grid |
 | Change Look at / years / filters | **Dashboard** — yellow dropdowns only |
 | Target rating or logo URL | **Settings** |
 | Company logo picture | **How to Use** — yellow top-left box, Insert → Pictures → **Place in Cell** |
@@ -90,7 +90,7 @@ Copy in this order:
 | **Skills** | **Skills**, starting at **B6** | Skill Name, Category, Description. Same row order. Do not paste over column A |
 | **Lists** | **Lists**, starting at **A6** | Department names |
 | **Years** | **Years**, starting at **B8** | Extra years you typed (if any), plus label/notes |
-| **Skill Matrix** scores | **Skill Matrix** year grids | Each year’s 1–5 block (open the year with +) |
+| **Skill Matrix** scores | **Skill Matrix** year grids | Each year’s 0–5 block (open the year with +) |
 | **Ratings** | skip | Follows Skill Matrix — do not paste over those formulas |
 | **Settings** | **Settings** **B6** and **B7** | Target rating and Logo URL |
 | **Dashboard** yellow cells | Same yellow cells | Look at, From year, To year, Department, Skillset, Employee |
@@ -105,7 +105,7 @@ If a paste overwrites a formula (formula bar still starts with `=` on Skill Matr
 
 Python is **not required** to use the workbook. It is only for people who maintain this repository and need to rebuild the `.xlsx` from the generator scripts.
 
-You do **not** need a new file to add people or skillsets — use the yellow rows on **Employees** and **Skills** (the fill disappears when you type), and type 1–5 on **Ratings**.
+You do **not** need a new file to add people or skillsets — use the yellow rows on **Employees** and **Skills** (the fill disappears when you type), and type 0–5 on **Ratings**.
 
 `python3 create_skill_matrix.py` **replaces** `Employee_Skill_Matrix.xlsx` with a new sample workbook. Scores you typed would not be in that new file.
 
@@ -115,7 +115,7 @@ When you want a newer layout (Dashboard, logo box, extra skillsets, and so on) *
 python3 create_skill_matrix.py --from Employee_Skill_Matrix.xlsx
 ```
 
-That builds the new workbook, copies your people, skillsets, years, departments, 1–5 ratings, Settings, Dashboard picks, and any logo pictures into it, and saves a timestamped backup first.
+That builds the new workbook, copies your people, skillsets, years, departments, 0–5 ratings, Settings, Dashboard picks, and any logo pictures into it, and saves a timestamped backup first.
 
 To write a separate file instead of replacing this one:
 

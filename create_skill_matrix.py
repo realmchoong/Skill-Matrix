@@ -85,6 +85,7 @@ RED = "B42318"
 YELLOW = "FFF8E7"
 
 RATING_FILLS = {
+    0: "E9ECEF",
     1: "F5D0D0",
     2: "FAD9C4",
     3: "FBF3D0",
@@ -92,6 +93,7 @@ RATING_FILLS = {
     5: "A8D5BA",
 }
 RATING_INK = {
+    0: "5E6C7A",
     1: "B42318",
     2: "C45C26",
     3: "8A6A00",
@@ -158,6 +160,7 @@ BASE_2526 = [
 ]
 
 RATING_SCALE = [
+    (0, "Not trained", "Has not done this job. Leave blank if not yet scored."),
     (1, "Beginner", "Little or no hands-on experience. Needs close guidance."),
     (2, "Basic", "Can complete simple tasks with help or a checklist."),
     (3, "Competent", "Works independently on standard tasks. Meets the target."),
@@ -345,16 +348,16 @@ def add_rating_validation(ws, cells_range) -> None:
     dv = DataValidation(
         type="whole",
         operator="between",
-        formula1="1",
+        formula1="0",
         formula2="5",
         allow_blank=True,
         showErrorMessage=True,
         showInputMessage=True,
     )
-    dv.errorTitle = "Rating must be 1–5"
-    dv.error = "Enter a whole number from 1 (beginner) to 5 (expert), or leave blank."
+    dv.errorTitle = "Rating must be 0–5"
+    dv.error = "Enter a whole number from 0 (not trained) to 5 (expert), or leave blank."
     dv.promptTitle = "Skill rating"
-    dv.prompt = "1 beginner · 2 basic · 3 competent · 4 proficient · 5 expert"
+    dv.prompt = "0 not trained · 1 beginner · 2 basic · 3 competent · 4 proficient · 5 expert"
     ws.add_data_validation(dv)
     ranges = cells_range if isinstance(cells_range, (list, tuple)) else [cells_range]
     for item in ranges:
@@ -463,7 +466,7 @@ def build_settings(wb: Workbook) -> None:
         ws.cell(r, 3).font = font(11, color=MUTED)
         ws.merge_cells(start_row=r, start_column=3, end_row=r, end_column=8)
 
-    ws["A13"] = "Rating scale (1–5)"
+    ws["A13"] = "Rating scale (0–5)"
     ws["A13"].font = font(14, bold=True, color=NAVY)
     for i, h in enumerate(["Rating", "Level", "Meaning"], 1):
         c = ws.cell(14, i, h)
@@ -596,7 +599,7 @@ def build_years(wb: Workbook) -> None:
     ws["A3"] = (
         '=IF(COUNTIF($B$8:$B$23,YEAR(TODAY()))>0,'
         '"Calendar year "&YEAR(TODAY())&" is already a column. '
-        'Right-click a sheet tab, Unhide, choose Ratings, and enter this year\'s 1-5 scores. '
+        'Right-click a sheet tab, Unhide, choose Ratings, and enter this year\'s 0-5 scores. '
         'Skill Matrix shows that year. Compare years on the Dashboard. '
         'Next years through 2034 are already waiting.",'
         '"New calendar year "&YEAR(TODAY())&" is not in the list yet. Type "&YEAR(TODAY())'
@@ -849,7 +852,7 @@ def build_matrix(wb: Workbook) -> None:
     ws.cell(
         TITLE_ROW,
         7,
-        "Pick a year, open that year bar (the + on the left), type 1-5. "
+        "Pick a year, open that year bar (the + on the left), type 0-5. "
         "Every year is stored for Dashboard comparison.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
@@ -866,7 +869,7 @@ def build_matrix(wb: Workbook) -> None:
 
     ws.merge_cells("C3:L3")
     ws["C3"] = (
-        "Each year has its own grid below. Use the + / - at the left to open a year, then type 1-5. "
+        "Each year has its own grid below. Use the + / - at the left to open a year, then type 0-5. "
         "Those scores go to Ratings and the Dashboard. Ratings are underlined, 1 (red) to 5 (green)."
     )
     ws["C3"].font = font(10, color=MUTED)
@@ -935,7 +938,7 @@ def build_matrix(wb: Workbook) -> None:
         banner_cell = ws.cell(
             banner,
             1,
-            f'=IF({years_cell}="","","Year "&{years_cell}&"  —  click + on the left if this row is collapsed, then type 1-5")',
+            f'=IF({years_cell}="","","Year "&{years_cell}&"  —  click + on the left if this row is collapsed, then type 0-5")',
         )
         banner_cell.font = font(12, bold=True, color=WHITE)
         banner_cell.fill = fill(TEAL)
@@ -1002,24 +1005,24 @@ def build_matrix(wb: Workbook) -> None:
         apply_blank_input_cf(ws, rng)
     add_rating_validation(ws, rating_ranges)
     ws.cell(year_block_emp_row(PRESET_YEARS.index(this_year) if this_year in PRESET_YEARS else 0, 0), glance_skill_col(1)).comment = Comment(
-        "Type 1-5 here. Open another year with the + on the left. Every year is stored for the Dashboard.",
+        "Type 0-5 here. Open another year with the + on the left. Every year is stored for the Dashboard.",
         "Skill Matrix",
         width=280,
         height=80,
     )
 
     legend_row = last_data_row + 2
-    ws.cell(legend_row, 1, "Rating underline").font = font(10, bold=True, color=MUTED)
+    ws.cell(legend_row, 1, "0–5").font = font(10, bold=True, color=MUTED)
     for score, color in RATING_INK.items():
-        cell = ws.cell(legend_row, score + 1, score)
+        cell = ws.cell(legend_row, score + 2, score)
         cell.font = font(11, bold=True, color=color, underline="single")
         cell.alignment = align("center")
         cell.border = THIN
-    ws.merge_cells(start_row=legend_row, start_column=7, end_row=legend_row, end_column=12)
+    ws.merge_cells(start_row=legend_row, start_column=8, end_row=legend_row, end_column=12)
     ws.cell(
         legend_row,
-        7,
-        "1 beginner  to  5 expert.  Open a year, type 1-5, compare years on the Dashboard.",
+        8,
+        "0 not trained  to  5 expert.  Open a year, type 0-5, compare years on the Dashboard.",
     ).font = font(10, italic=True, color=MUTED)
 
     ws.column_dimensions["A"].width = 20
@@ -1051,7 +1054,7 @@ def build_ratings(wb: Workbook) -> None:
     ws.cell(
         TITLE_ROW,
         9,
-        "Each year's 1-5 is typed on Skill Matrix (open that year bar). This sheet follows those grids. "
+        "Each year's 0-5 is typed on Skill Matrix (open that year bar). This sheet follows those grids. "
         "Hide this tab when you are done.",
     ).font = font(10, italic=True, color=MUTED)
     ws.row_dimensions[TITLE_ROW].height = 28
@@ -1250,9 +1253,9 @@ def build_calc(wb: Workbook) -> None:
     ws = wb[SHEET_CALC] if SHEET_CALC in wb.sheetnames else wb.create_sheet(SHEET_CALC)
 
     ws["A1"] = "LatestYear"
-    ws["B1"] = '=IFERROR(MAXIFS(DataYear,DataRating,">=1"),YEAR(TODAY()))'
+    ws["B1"] = '=IFERROR(MAXIFS(DataYear,DataRating,">=0"),YEAR(TODAY()))'
     ws["A2"] = "PreviousYear"
-    ws["B2"] = '=IFERROR(MAXIFS(DataYear,DataRating,">=1",DataYear,"<"&B1),"")'
+    ws["B2"] = '=IFERROR(MAXIFS(DataYear,DataRating,">=0",DataYear,"<"&B1),"")'
     add_defined_name(wb, "LatestYear", f"{q(SHEET_CALC)}!$B$1")
     add_defined_name(wb, "PreviousYear", f"{q(SHEET_CALC)}!$B$2")
     add_defined_name(wb, "ViewMode", f"{q(SHEET_DASH)}!$B$5")
@@ -1264,7 +1267,7 @@ def build_calc(wb: Workbook) -> None:
 
     year_dv = DataValidation(type="list", formula1="=YearList", allow_blank=False)
     year_dv.promptTitle = "Year"
-    year_dv.prompt = "Pick a year, then open that year bar on Skill Matrix and type 1-5."
+    year_dv.prompt = "Pick a year, then open that year bar on Skill Matrix and type 0-5."
     wb[SHEET_MATRIX].add_data_validation(year_dv)
     year_dv.add("B3")
 
@@ -1339,13 +1342,13 @@ def build_calc(wb: Workbook) -> None:
         ws.cell(
             r,
             8,
-            f'=IF(OR(G{r}="",EmpFilter="",DashFromYear=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashFromYear,DataRating,">=1")=0,"",'
+            f'=IF(OR(G{r}="",EmpFilter="",DashFromYear=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashFromYear,DataRating,">=0")=0,"",'
             f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashFromYear),"")))',
         )
         ws.cell(
             r,
             9,
-            f'=IF(OR(G{r}="",EmpFilter="",DashToYear=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashToYear,DataRating,">=1")=0,"",'
+            f'=IF(OR(G{r}="",EmpFilter="",DashToYear=""),"",IF(COUNTIFS(DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashToYear,DataRating,">=0")=0,"",'
             f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashToYear),"")))',
         )
 
@@ -1365,19 +1368,19 @@ def build_calc(wb: Workbook) -> None:
             r,
             13,
             f'=IF(OR(L{r}="",SkillSetFilter="",DashToYear=""),"",'
-            f'IF(COUNTIFS(DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashToYear,DataRating,">=1")=0,"",'
+            f'IF(COUNTIFS(DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashToYear,DataRating,">=0")=0,"",'
             f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashToYear)))",
         )
         ws.cell(
             r,
             14,
             f'=IF(OR(L{r}="",SkillSetFilter="",DashFromYear=""),"",'
-            f'IF(COUNTIFS(DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashFromYear,DataRating,">=1")=0,"",'
+            f'IF(COUNTIFS(DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashFromYear,DataRating,">=0")=0,"",'
             f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashFromYear)))",
         )
         # Numeric key only: unused slots stay text-blank so they are not ranked.
-        # Unrated people are 0 (ratings are 1-5), so they sort last.
-        ws.cell(r, 15, f'=IF(L{r}="","",IF(ISNUMBER(M{r}),M{r},0))')
+        # Unrated people use -1 so a real score of 0 still ranks above a blank.
+        ws.cell(r, 15, f'=IF(L{r}="","",IF(ISNUMBER(M{r}),M{r},-1))')
         ws.cell(
             r,
             17,
@@ -1624,8 +1627,8 @@ def build_dashboard(wb: Workbook) -> None:
 
     chart = LineChart()
     chart.title = "Year-on-year overall (Team or Individual)"
-    chart.y_axis.title = "Average (1-5)"
-    chart.y_axis.scaling.min = 1
+    chart.y_axis.title = "Average (0-5)"
+    chart.y_axis.scaling.min = 0
     chart.y_axis.scaling.max = 5
     chart.style = 10
     chart.height = 8
@@ -1646,7 +1649,7 @@ def build_dashboard(wb: Workbook) -> None:
         10 + n_rows,
         1,
         "The all-year Ratings sheet is hidden so the tabs stay simple. "
-        "To type or edit 1-5 for any year: right-click a sheet tab, choose Unhide, then Ratings.",
+        "To type or edit 0-5 for any year: open that year on Skill Matrix.",
     ).font = font(10, italic=True, color=MUTED)
     ws.cell(10 + n_rows, 1).alignment = align("left", wrap=True)
 
@@ -1705,7 +1708,7 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 5, 1, 14, 6,
         "1. This year's crew grid",
-        "Open Skill Matrix. Pick a year at the top, open that year with the + on the left, type 1-5. "
+        "Open Skill Matrix. Pick a year at the top, open that year with the + on the left, type 0-5. "
         "Every year is stored for the Dashboard. "
         "Ratings are underlined, 1 (red) to 5 (green). Overall is that person's average for that year. "
         "The highest overall in the open year is highlighted in gold.\n\n"
@@ -1733,7 +1736,7 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 16, 7, 24, 12,
         "4. Switch years and store scores",
-        "On Skill Matrix, pick a year (yellow box). Click + at the left of that year bar to open the grid. Type 1-5.\n\n"
+        "On Skill Matrix, pick a year (yellow box). Click + at the left of that year bar to open the grid. Type 0-5.\n\n"
         "Those scores are stored for Dashboard From / To comparison. Ratings (hidden) follows each year grid.\n\n"
         "Years 2023-2034 are already there. To add 2035 or later, type it on Years in the next yellow row.",
         TEAL,
@@ -1763,7 +1766,7 @@ def build_how_to(wb: Workbook) -> None:
     ws["A31"] = (
         "Microsoft 365 / Excel 2021+ is recommended (MAXIFS, SUMIFS, LOOKUP). "
         "No Python and no macros. "
-        "Type 1-5 on Skill Matrix (open the year you want). "
+        "Type 0-5 on Skill Matrix (open the year you want). "
         "Do not overwrite name/overall formulas, or the Dashboard table, Data, or Calc."
     )
     ws["A31"].font = font(10, italic=True, color=MUTED)
@@ -1786,7 +1789,7 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 35, 7, 44, 12,
         "Scores and what not to touch",
-        "Type this year's 1-5 on Skill Matrix. Open another year with the + on the left and type there too.\n\n"
+        "Type 0-5 on Skill Matrix. Open another year with the + on the left and type there too.\n\n"
         "Dashboard yellow cells are dropdowns: Look at, From / To year, Department, Skillset, Employee.\n\n"
         "Leave Data and Calc hidden. Those sheets power the numbers.\n\n"
         "New layout from a download: copy your Employees, Skills, Lists, Years, and Ratings numbers into the new file (Paste Special > Values). Then use the new file.",
@@ -1837,7 +1840,7 @@ def build_workbook() -> Workbook:
     wb.properties.title = "Employee Skill Matrix"
     wb.properties.creator = "Skill Matrix"
     wb.properties.description = (
-        "Rate skillsets 1-5 across multiple years, add people and skillsets later, "
+        "Rate skillsets 0-5 across multiple years, add people and skillsets later, "
         "and compare Team, Skillsets, or Individual on the dashboard."
     )
     return wb

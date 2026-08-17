@@ -130,7 +130,7 @@ def _rating_number(value):
         rating = int(value)
     except (TypeError, ValueError):
         return None
-    if 1 <= rating <= 5:
+    if 0 <= rating <= 5:
         return rating
     return None
 
@@ -308,7 +308,7 @@ def _read_skill_matrix_scores(
                     rating = int(value)
                 except (TypeError, ValueError):
                     continue
-                if 1 <= rating <= 5:
+                if 0 <= rating <= 5:
                     found[(emp[1].lower(), skill[0].lower(), int(year))] = rating
     return found
 
