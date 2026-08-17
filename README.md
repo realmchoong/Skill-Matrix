@@ -33,7 +33,7 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 | **How to Use** | Walkthrough and the 1–5 scale |
 | **Skill Matrix** | Whole crew, **one year**. Ratings are underlined 1–5. **Overall** is the average; the highest is highlighted |
 | **Dashboard** | Look at Team, Skillsets, or Individual |
-| **Employees** | Add a person in the next yellow row |
+| **Employees** | Add a person in the next yellow row (fill clears when you type) |
 | **Skills** | Skillset catalog (ratings and Dashboard ranking) |
 | **Years** | Year list |
 | **Lists** | Departments |
@@ -51,7 +51,7 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 
 `python3 create_skill_matrix.py` **replaces** `Employee_Skill_Matrix.xlsx` with a new sample workbook. Scores you typed would not be in that new file.
 
-You do **not** need a new file to add people or skillsets — use the yellow rows on **Employees** and **Skills**, and type 1–5 on **Ratings**.
+You do **not** need a new file to add people or skillsets — use the yellow rows on **Employees** and **Skills** (the fill disappears when you type), and type 1–5 on **Ratings**.
 
 When you want a newer layout (Dashboard, logo box, extra skillsets, and so on) **and** you already have real data:
 

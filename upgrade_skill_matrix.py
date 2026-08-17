@@ -6,7 +6,6 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 from openpyxl.drawing.image import Image as XLImage
-from openpyxl.styles import PatternFill
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -26,14 +25,10 @@ from create_skill_matrix import (
     SHEET_SKILLS,
     SHEET_YEARS,
     SKILLS,
-    YELLOW,
     YEAR_FIRST_COL,
-    fill,
     matrix_row,
     year_col,
 )
-
-CLEAR = PatternFill(fill_type=None)
 
 
 def copy_user_data(source_path: str | Path, dest: Workbook) -> None:
@@ -325,13 +320,10 @@ def _write_employees(ws: Worksheet, employees: list[tuple]) -> None:
         if i < len(employees):
             _eid, name, dept, hired, status = employees[i]
             values = [emp_id, name, dept, hired, status]
-            occupied = True
         else:
             values = [emp_id, "", "", None, ""]
-            occupied = False
         for col, value in enumerate(values, 1):
-            cell = ws.cell(row, col, value)
-            cell.fill = CLEAR if occupied else fill(YELLOW)
+            ws.cell(row, col, value)
         ws.cell(row, 4).number_format = "YYYY-MM-DD"
 
 
@@ -342,13 +334,10 @@ def _write_skills(ws: Worksheet, skills: list[tuple[str, str, str]]) -> None:
         if i < len(skills):
             name, category, desc = skills[i]
             values = [skill_id, name, category, desc]
-            occupied = True
         else:
             values = [skill_id, "", "", ""]
-            occupied = False
         for col, value in enumerate(values, 1):
-            cell = ws.cell(row, col, value)
-            cell.fill = CLEAR if occupied else fill(YELLOW)
+            ws.cell(row, col, value)
 
 
 def _write_years(ws: Worksheet, years: list[tuple]) -> None:
@@ -360,14 +349,10 @@ def _write_years(ws: Worksheet, years: list[tuple]) -> None:
             ws.cell(row, 2, year)
             ws.cell(row, 3, label)
             ws.cell(row, 4, notes)
-            for col in range(2, 5):
-                ws.cell(row, col).fill = CLEAR
         else:
             ws.cell(row, 2, "")
             ws.cell(row, 3, "")
-            ws.cell(row, 4, "Type a year here to add a column")
-            for col in range(2, 5):
-                ws.cell(row, col).fill = fill(YELLOW)
+            ws.cell(row, 4, "")
 
 
 def _write_departments(ws: Worksheet, departments: list[str]) -> None:
@@ -375,12 +360,7 @@ def _write_departments(ws: Worksheet, departments: list[str]) -> None:
     for i in range(NUM_LIST_SLOTS):
         row = header_row + 1 + i
         cell = ws.cell(row, 1)
-        if i < len(departments):
-            cell.value = departments[i]
-            cell.fill = CLEAR
-        else:
-            cell.value = ""
-            cell.fill = fill(YELLOW)
+        cell.value = departments[i] if i < len(departments) else ""
 
 
 def _write_ratings(

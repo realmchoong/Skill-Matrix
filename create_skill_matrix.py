@@ -344,6 +344,15 @@ def apply_rating_cf(ws, cells_range: str) -> None:
         )
 
 
+def apply_blank_input_cf(ws, cells_range: str) -> None:
+    """Yellow while empty; the fill clears as soon as the cell has a value."""
+    top_left = cells_range.split(":")[0]
+    ws.conditional_formatting.add(
+        cells_range,
+        FormulaRule(formula=[f"LEN({top_left})=0"], fill=fill(YELLOW)),
+    )
+
+
 def apply_change_cf(ws, cells_range: str) -> None:
     ws.conditional_formatting.add(
         cells_range,
@@ -467,7 +476,7 @@ def build_lists(wb: Workbook) -> None:
     ws.merge_cells("A3:H3")
     ws["A3"] = (
         "Departments: Vision, Sound, Lighting, Staging. "
-        "Add another in the next yellow row, then choose it on Employees. "
+        "Add another in the next yellow row (the fill clears when you type), then choose it on Employees. "
         "To add a skillset, use Skills. To add a person, use Employees."
     )
     ws["A3"].font = font(11, color=MUTED, italic=True)
@@ -485,8 +494,6 @@ def build_lists(wb: Workbook) -> None:
         dcell = ws.cell(r, 1, dept)
         dcell.font = font(11)
         dcell.border = THIN
-        if not dcell.value:
-            dcell.fill = fill(YELLOW)
 
     ws.cell(6 + len(DEPARTMENTS), 1).comment = Comment(
         "Type a new department here. It will appear in the Department dropdown on Employees.",
@@ -506,6 +513,7 @@ def build_lists(wb: Workbook) -> None:
     add_defined_name(wb, "ViewModeList", f"{q(SHEET_LISTS)}!$C$6:$C${5 + len(VIEW_MODES)}")
 
     add_table(ws, "tblDepartments", f"A5:A{5 + NUM_LIST_SLOTS}")
+    apply_blank_input_cf(ws, f"A6:A{5 + NUM_LIST_SLOTS}")
 
     ws["E5"] = "DeptFilter"
     ws["E6"] = "(All departments)"
@@ -615,11 +623,8 @@ def build_years(wb: Workbook) -> None:
             ws.cell(r, 4, "Column already on Ratings")
         else:
             cell = ws.cell(r, 2, "")
-            cell.fill = fill(YELLOW)
             ws.cell(r, 3, "")
-            ws.cell(r, 4, "Type a year here to add a column")
-            ws.cell(r, 3).fill = fill(YELLOW)
-            ws.cell(r, 4).fill = fill(YELLOW)
+            ws.cell(r, 4, "")
         for c in range(2, 5):
             ws.cell(r, c).border = THIN
             ws.cell(r, c).font = font(11)
@@ -636,6 +641,7 @@ def build_years(wb: Workbook) -> None:
     )
 
     add_table(ws, "tblYears", f"A7:D{7 + NUM_YEAR_SLOTS}")
+    apply_blank_input_cf(ws, f"B8:D{7 + NUM_YEAR_SLOTS}")
     add_defined_name(
         wb,
         "YearList",
@@ -666,6 +672,7 @@ def build_employees(wb: Workbook) -> None:
     ws.merge_cells("A3:E3")
     ws["A3"] = (
         "Add a person in the next yellow row: name, department (dropdown), hire date, status. "
+        "The yellow fill disappears as soon as you type. "
         "Department options are Vision, Sound, Lighting, Staging (add more on Lists first). "
         "Hire date is used for since they joined on the Dashboard."
     )
@@ -694,8 +701,6 @@ def build_employees(wb: Workbook) -> None:
             cell = ws.cell(r, c, val)
             cell.font = font(11)
             cell.border = THIN
-            if i >= len(EMPLOYEES):
-                cell.fill = fill(YELLOW)
         ws.cell(r, 4).number_format = "YYYY-MM-DD"
         ws.cell(r, 1).alignment = align("center")
 
@@ -715,6 +720,7 @@ def build_employees(wb: Workbook) -> None:
     dept_dv.add(f"C6:C{5 + NUM_EMPLOYEE_SLOTS}")
 
     add_table(ws, "tblEmployees", f"A5:E{5 + NUM_EMPLOYEE_SLOTS}")
+    apply_blank_input_cf(ws, f"B6:E{5 + NUM_EMPLOYEE_SLOTS}")
     add_defined_name(
         wb,
         "EmployeeList",
@@ -740,7 +746,7 @@ def build_skills(wb: Workbook) -> None:
     ws.merge_cells("A3:D3")
     ws["A3"] = (
         "These are the skillsets everyone is rated on, and the list Dashboard uses when you Look at Skillsets. "
-        "Add a skillset in the next yellow row. Every employee gets a rating row for it, "
+        "Add a skillset in the next yellow row (the fill clears when you type). Every employee gets a rating row for it, "
         "and it appears in the Dashboard Skillsets dropdown."
     )
     ws["A3"].font = font(11, color=MUTED, italic=True)
@@ -766,8 +772,6 @@ def build_skills(wb: Workbook) -> None:
             cell.font = font(11)
             cell.border = THIN
             cell.alignment = align("left" if c > 1 else "center", wrap=True)
-            if i >= len(SKILLS):
-                cell.fill = fill(YELLOW)
         ws.row_dimensions[r].height = 22
 
     ws.cell(6 + len(SKILLS), 2).comment = Comment(
@@ -786,6 +790,7 @@ def build_skills(wb: Workbook) -> None:
     cat_dv.add(f"C6:C{5 + NUM_SKILL_SLOTS}")
 
     add_table(ws, "tblSkills", f"A5:D{5 + NUM_SKILL_SLOTS}")
+    apply_blank_input_cf(ws, f"B6:D{5 + NUM_SKILL_SLOTS}")
     add_defined_name(
         wb,
         "SkillNameList",
@@ -1651,7 +1656,7 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 16, 1, 24, 6,
         "3. Add people and skillsets",
-        "Employees — next yellow row. Type the name, pick Department (Vision, Sound, Lighting, Staging), fill Hire date.\n\n"
+        "Employees — next yellow row. Type the name, pick Department (Vision, Sound, Lighting, Staging), fill Hire date. Yellow goes away when you type.\n\n"
         "Skillsets — next yellow row on Skills. Every person gets a rating row, and Dashboard can rank who is strongest on it.\n\n"
         "Lists — departments only.\n\n"
         "Keep using this file as you add people and scores. A newly generated workbook would not include them unless you copy the data across (see README).",
