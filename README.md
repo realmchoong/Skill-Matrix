@@ -45,7 +45,27 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 3. Open **Skill Matrix** for this year’s crew grid.
 4. Open **Dashboard**, choose **Look at**, then From / To years.
 
-## Rebuild the file
+## Rebuild or upgrade the file
+
+`python3 create_skill_matrix.py` **replaces** `Employee_Skill_Matrix.xlsx` with a new sample workbook. Scores you typed would not be in that new file.
+
+You do **not** need a new file to add people or skillsets — use the yellow rows on **Employees** and **Skills**, and type 1–5 on **Ratings**.
+
+When you want a newer layout (Dashboard, logo box, extra skillsets, and so on) **and** you already have real data:
+
+```bash
+python3 create_skill_matrix.py --from Employee_Skill_Matrix.xlsx
+```
+
+That builds the new workbook, copies your people, skillsets, years, departments, 1–5 ratings, Settings, Dashboard picks, and any logo pictures into it, and saves a timestamped backup first.
+
+To write a separate file instead of replacing this one:
+
+```bash
+python3 create_skill_matrix.py --from Employee_Skill_Matrix.xlsx -o Employee_Skill_Matrix_new.xlsx
+```
+
+Fresh sample file (no copy):
 
 ```bash
 pip install -r requirements.txt

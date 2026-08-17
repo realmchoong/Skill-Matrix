@@ -1571,7 +1571,8 @@ def build_how_to(wb: Workbook) -> None:
         "3. Add people and skillsets",
         "Employees — next yellow row. Type the name, pick Department (Vision, Sound, Lighting, Staging), fill Hire date.\n\n"
         "Skillsets — next yellow row on Skills. Every person gets a rating row, and Dashboard can rank who is strongest on it.\n\n"
-        "Lists — departments only.",
+        "Lists — departments only.\n\n"
+        "Keep using this file as you add people and scores. A newly generated workbook would not include them unless you copy the data across (see README).",
         "3D5A80",
     )
     box(
@@ -1619,7 +1620,7 @@ def build_how_to(wb: Workbook) -> None:
     apply_print(ws, landscape=True)
 
 
-def main() -> None:
+def build_workbook() -> Workbook:
     wb = Workbook()
     wb.remove(wb.active)
 
@@ -1658,10 +1659,53 @@ def main() -> None:
         "Rate skillsets 1-5 across multiple years, add people and skillsets later, "
         "and compare Team, Skillsets, or Individual on the dashboard."
     )
+    return wb
 
-    path = "Employee_Skill_Matrix.xlsx"
-    wb.save(path)
-    print(f"Wrote {path}")
+
+def main() -> None:
+    import argparse
+    import shutil
+    from datetime import datetime
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(
+        description="Build the Employee Skill Matrix workbook. "
+        "Use --from to copy people, skills, and ratings out of an existing file."
+    )
+    parser.add_argument(
+        "--from",
+        dest="from_path",
+        metavar="EXISTING.xlsx",
+        help="Copy your data from this workbook into the new file (people, skills, years, ratings, logo).",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        default="Employee_Skill_Matrix.xlsx",
+        help="Where to write the new workbook (default: Employee_Skill_Matrix.xlsx)",
+    )
+    args = parser.parse_args()
+
+    wb = build_workbook()
+    if args.from_path:
+        from upgrade_skill_matrix import copy_user_data, embed_pending_images
+
+        copy_user_data(args.from_path, wb)
+
+    out = Path(args.output)
+    src = Path(args.from_path) if args.from_path else None
+    if src and src.exists() and out.exists() and src.resolve() == out.resolve():
+        backup = out.with_name(f"{out.stem}.backup-{datetime.now().strftime('%Y%m%d-%H%M%S')}{out.suffix}")
+        shutil.copy2(out, backup)
+        print(f"Backed up {out} to {backup}")
+
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        if args.from_path:
+            embed_pending_images(wb, tmp)
+        wb.save(out)
+    print(f"Wrote {out}")
 
 
 if __name__ == "__main__":
