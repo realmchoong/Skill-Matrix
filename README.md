@@ -29,7 +29,7 @@ Add more: yellow row on **Skills**. The new name appears on Skill Matrix and in 
 | Sheet | What it is for |
 | --- | --- |
 | **How to Use** | Walkthrough and the 1–5 scale |
-| **Skill Matrix** | Whole crew, **one year**. Skills are coloured 1–5. **Overall** is the average; the highest is highlighted |
+| **Skill Matrix** | Whole crew, **one year**. Ratings are underlined 1–5. **Overall** is the average; the highest is highlighted |
 | **Dashboard** | Look at Team, Skillsets, or Individual |
 | **Employees** | Add a person in the next yellow row |
 | **Skills** | Skillset catalog (ratings and Dashboard ranking) |

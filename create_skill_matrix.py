@@ -7,7 +7,7 @@ from openpyxl import Workbook
 from openpyxl.chart import BarChart, LineChart, Reference
 from openpyxl.chart.marker import Marker
 from openpyxl.comments import Comment
-from openpyxl.formatting.rule import CellIsRule, ColorScaleRule, FormulaRule
+from openpyxl.formatting.rule import CellIsRule, FormulaRule
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.workbook.defined_name import DefinedName
@@ -88,6 +88,13 @@ RATING_FILLS = {
     3: "FBF3D0",
     4: "D4EDDA",
     5: "A8D5BA",
+}
+RATING_INK = {
+    1: "B42318",
+    2: "C45C26",
+    3: "8A6A00",
+    4: "1E7A46",
+    5: "0B6B3A",
 }
 
 THIN = Border(
@@ -322,14 +329,13 @@ def add_rating_validation(ws, cells_range: str) -> None:
 
 
 def apply_rating_cf(ws, cells_range: str) -> None:
-    for score, color in RATING_FILLS.items():
+    for score, color in RATING_INK.items():
         ws.conditional_formatting.add(
             cells_range,
             CellIsRule(
                 operator="equal",
                 formula=[str(score)],
-                fill=fill(color),
-                font=font(12, bold=True, color=INK),
+                font=font(12, bold=True, color=color, underline="single"),
             ),
         )
 
@@ -809,7 +815,7 @@ def build_matrix(wb: Workbook) -> None:
 
     ws.merge_cells("C3:L3")
     ws["C3"] = (
-        "Each skill is coloured 1 (red) to 5 (green). Overall is the average for this year. "
+        "Each skill rating is underlined, 1 (red) to 5 (green). Overall is the average for this year. "
         "The highest overall is highlighted. Compare years on the Dashboard. "
         "To type 1-5: right-click a sheet tab, Unhide, choose Ratings."
     )
@@ -900,20 +906,6 @@ def build_matrix(wb: Workbook) -> None:
         ws,
         f"{first_skill}{GLANCE_START}:{last_skill}{GLANCE_END}",
     )
-    ws.conditional_formatting.add(
-        f"C{GLANCE_START}:C{GLANCE_END}",
-        ColorScaleRule(
-            start_type="num",
-            start_value=1,
-            start_color=RATING_FILLS[1],
-            mid_type="num",
-            mid_value=3,
-            mid_color=RATING_FILLS[3],
-            end_type="num",
-            end_value=5,
-            end_color=RATING_FILLS[5],
-        ),
-    )
     top_formula = (
         f'AND(ISNUMBER($C{GLANCE_START}),$C{GLANCE_START}=MAX($C${GLANCE_START}:$C${GLANCE_END}))'
     )
@@ -927,18 +919,17 @@ def build_matrix(wb: Workbook) -> None:
         ws.conditional_formatting.add(rng, rule)
 
     legend_row = GLANCE_END + 2
-    ws.cell(legend_row, 1, "Rating colour").font = font(10, bold=True, color=MUTED)
-    for score, color in RATING_FILLS.items():
+    ws.cell(legend_row, 1, "Rating underline").font = font(10, bold=True, color=MUTED)
+    for score, color in RATING_INK.items():
         cell = ws.cell(legend_row, score + 1, score)
-        cell.fill = fill(color)
-        cell.font = font(11, bold=True)
+        cell.font = font(11, bold=True, color=color, underline="single")
         cell.alignment = align("center")
         cell.border = THIN
     ws.merge_cells(start_row=legend_row, start_column=7, end_row=legend_row, end_column=12)
     ws.cell(
         legend_row,
         7,
-        "1 beginner  to  5 expert.  Overall = average.  Gold name = highest overall this year.",
+        "1 beginner  to  5 expert, underlined.  Overall = average.  Gold name = highest overall this year.",
     ).font = font(10, italic=True, color=MUTED)
 
     ws.column_dimensions["A"].width = 20
@@ -1624,8 +1615,9 @@ def build_how_to(wb: Workbook) -> None:
     box(
         ws, 5, 1, 14, 6,
         "1. This year's crew grid",
-        "Open Skill Matrix. Each row is one person. Each column is one skillset, coloured 1 (red) to 5 (green). "
-        "Overall is that person's average. The highest overall is highlighted in gold.\n\n"
+        "Open Skill Matrix. Each row is one person. Each column is one skillset. "
+        "Ratings are underlined, 1 (red) to 5 (green). Overall is that person's average. "
+        "The highest overall is highlighted in gold.\n\n"
         "Only this calendar year is shown (or pick another year at the top).\n\n"
         "To type 1-5: right-click a sheet tab, Unhide, choose Ratings. Then Hide it again when you are done.",
         NAVY,
