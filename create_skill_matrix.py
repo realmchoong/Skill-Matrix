@@ -1290,11 +1290,13 @@ def build_calc(wb: Workbook) -> None:
             f'IFERROR(SUMIFS(DataRating,DataEmployee,EmpFilter,DataSkill,G{r},DataYear,DashToYear),"")))',
         )
 
-    # Rank everyone on the selected skill (To year), with From year for comparison
+    # Rank every named employee on the selected skill (To year). Unrated people
+    # keep a 0 sort key so they still appear, at the bottom, with a blank score.
     last_emp = 7 + NUM_EMPLOYEE_SLOTS
     ws["L7"] = "Employee"
     ws["M7"] = "ToYear"
     ws["N7"] = "FromYear"
+    ws["O7"] = "SortKey"
     ws["Q7"] = "Rank"
     for emp_i in range(NUM_EMPLOYEE_SLOTS):
         r = 8 + emp_i
@@ -1314,10 +1316,15 @@ def build_calc(wb: Workbook) -> None:
             f'IF(COUNTIFS(DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashFromYear,DataRating,">=1")=0,"",'
             f"SUMIFS(DataRating,DataEmployee,L{r},DataSkill,SkillSetFilter,DataYear,DashFromYear)))",
         )
+        # Numeric key only: unused slots stay text-blank so they are not ranked.
+        # Unrated people are 0 (ratings are 1-5), so they sort last.
+        ws.cell(r, 15, f'=IF(L{r}="","",IF(ISNUMBER(M{r}),M{r},0))')
         ws.cell(
             r,
             17,
-            f'=IF(OR(L{r}="",M{r}=""),"",RANK(M{r},$M$8:$M${last_emp},0)+COUNTIF($M$8:M{r},M{r})-1)',
+            f'=IF(L{r}="","",'
+            f'COUNTIFS($L$8:$L${last_emp},"<>",$O$8:$O${last_emp},">"&O{r})+'
+            f'COUNTIFS($L$8:L{r},"<>",$O$8:O{r},O{r}))',
         )
         ws.cell(r, 13).number_format = "0.00"
         ws.cell(r, 14).number_format = "0.00"
@@ -1367,8 +1374,8 @@ def build_dashboard(wb: Workbook) -> None:
     ws.merge_cells("A3:L3")
     ws["A3"] = (
         "Look at Team, Skillsets, or Individual, then From year and To year. "
-        "The Skillset dropdown is the job to fill: switch Look at to Skillsets and everyone is ranked on that skill. "
-        "Top row is the best candidate."
+        "The Skillset dropdown is the job to fill: switch Look at to Skillsets and the whole crew is listed, strongest first. "
+        "People not yet rated for the To year sit at the bottom. Top row is the best candidate."
     )
     ws["A3"].font = font(11, italic=True, color=MUTED)
     ws["A3"].alignment = align("left", wrap=True)
@@ -1406,7 +1413,8 @@ def build_dashboard(wb: Workbook) -> None:
         ws.cell(6, col).font = font(12, bold=True, color=NAVY)
     ws["D6"].comment = Comment(
         "This is the job to fill. Set Look at to Skillsets, then pick a skill. "
-        "The table ranks everyone on that skill; the top row is the best candidate.",
+        "Every employee is listed, strongest first. Unrated people are at the bottom. "
+        "The top row is the best candidate.",
         "Skill Matrix",
         width=280,
         height=90,
@@ -1649,7 +1657,7 @@ def build_how_to(wb: Workbook) -> None:
         "2. Dashboard — pick what to look at",
         "Look at: Team, Skillsets, or Individual. Then pick From year and To year.\n\n"
         "Team — year-on-year overall ratings (optionally one department).\n\n"
-        "Skillsets — pick a skill in the Skillset dropdown. Everyone is ranked on that job. Top row is the best candidate.\n\n"
+        "Skillsets — pick a skill in the Skillset dropdown. The whole crew is listed, strongest first. People not yet rated sit at the bottom. Top row is the best candidate.\n\n"
         "Individual — pick a person in the Employee dropdown. That person vs themselves on each skillset.",
         GOLD,
     )

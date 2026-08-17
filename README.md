@@ -11,7 +11,7 @@ Start with **Look at**, then **From year** and **To year**:
 | Look at | What you see |
 | --- | --- |
 | **Team** | Year-on-year **overall** ratings (optionally one department: Vision, Sound, Lighting, Staging) |
-| **Skillsets** | Pick a **Skillset** (the job to fill). Everyone is ranked on that skill. Top row is the **best candidate** |
+| **Skillsets** | Pick a **Skillset** (the job to fill). The whole crew is listed, strongest first. People not yet rated for the To year sit at the bottom. Top row is the **best candidate** |
 | **Individual** | Pick an **Employee**. That person vs themselves on each skillset |
 
 The yellow **Skillset** dropdown is always there. It is used when Look at is **Skillsets**.
