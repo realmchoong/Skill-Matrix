@@ -190,20 +190,30 @@ def add_defined_name(wb: Workbook, name: str, ref: str) -> None:
     wb.defined_names.add(DefinedName(name=name, attr_text=ref))
 
 
-def add_logo_box(ws) -> None:
-    """Empty A1:B2 so a company logo can be inserted in the top-left corner."""
+def add_logo_box(ws, source: bool = False) -> None:
+    """Top-left logo. Insert once on How to Use; other sheets show that same cell."""
     ws.merge_cells("A1:B2")
     cell = ws["A1"]
-    cell.value = "Company logo"
+    if source:
+        cell.value = "Company logo"
+        cell.comment = Comment(
+            "Insert the logo once here: Insert > Pictures > Place in Cell. "
+            "It then appears in this box on every other tab. "
+            "Do not use Place over Cells, or the other tabs will stay blank.",
+            "Skill Matrix",
+            width=280,
+            height=110,
+        )
+    else:
+        cell.value = f"={q(SHEET_HOW)}!A1"
+        cell.comment = Comment(
+            "Linked from How to Use. Insert the logo there with Insert > Pictures > Place in Cell.",
+            "Skill Matrix",
+            width=260,
+            height=80,
+        )
     cell.font = font(10, italic=True, color=MUTED)
     cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    cell.fill = fill(PAPER)
-    cell.comment = Comment(
-        "Insert your company logo here: Insert > Pictures, then resize it to this box.",
-        "Skill Matrix",
-        width=260,
-        height=70,
-    )
     logo_border = Border(
         left=Side(style="medium", color=LINE),
         right=Side(style="medium", color=LINE),
@@ -214,10 +224,12 @@ def add_logo_box(ws) -> None:
         for c in (1, 2):
             ws.cell(r, c).border = logo_border
             ws.cell(r, c).fill = fill(PAPER)
+    ws.row_dimensions[1].height = 40
+    ws.row_dimensions[2].height = 28
 
 
 def add_navigation(ws, active: str, last_col: int) -> None:
-    add_logo_box(ws)
+    add_logo_box(ws, source=active == SHEET_HOW)
     for i, name in enumerate(NAV_SHEETS):
         col = NAV_START_COL + i
         cell = ws.cell(NAV_ROW, col, name)
@@ -1543,7 +1555,8 @@ def build_how_to(wb: Workbook) -> None:
     ws.merge_cells("A3:L3")
     ws["A3"] = (
         "Skill Matrix is this year's grid. On Dashboard, start with Look at: Team, Skillsets, or Individual. "
-        "Paste a company logo in the top-left box. The all-year Ratings sheet is hidden until you Unhide it."
+        "Insert a company logo once in the top-left box (Insert > Pictures > Place in Cell). "
+        "It appears on every tab. Ratings is hidden until you Unhide it."
     )
     ws["A3"].font = font(12, color=MUTED)
     ws["A3"].alignment = align("left", wrap=True)

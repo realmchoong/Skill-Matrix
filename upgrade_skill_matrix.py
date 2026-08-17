@@ -16,6 +16,7 @@ from create_skill_matrix import (
     NUM_LIST_SLOTS,
     NUM_SKILL_SLOTS,
     NUM_YEAR_SLOTS,
+    SHEET_HOW,
     SHEET_DASH,
     SHEET_EMP,
     SHEET_LISTS,
@@ -437,33 +438,44 @@ def _write_dashboard(dest: Workbook, dashboard: dict) -> None:
 
 
 def embed_pending_images(dest: Workbook, tmp_dir: str | Path) -> int:
-    """Write copied pictures into the new workbook. Call this before save()."""
+    """Write copied pictures onto How to Use only. Other tabs link to that cell."""
     jobs = getattr(dest, "_pending_images", None) or []
     tmp_path = Path(tmp_dir)
     copied = 0
-    for sheet_name, blob, anchor in jobs:
+    for sheet_name, blob, _anchor in jobs:
         if sheet_name not in dest.sheetnames:
             continue
         suffix = ".jpg" if blob[:2] == b"\xff\xd8" else ".png"
         path = tmp_path / f"{sheet_name}-{copied}{suffix}"
         path.write_bytes(blob)
         new_img = XLImage(str(path))
-        new_img.anchor = anchor
+        new_img.anchor = "A1"
         dest[sheet_name].add_image(new_img)
         copied += 1
     dest._pending_images = []
     if copied:
-        print(f"Copied {copied} logo / picture(s)")
+        print(f"Copied {copied} logo / picture(s) onto How to Use")
     return copied
 
 
+def _images_on(ws: Worksheet) -> list[bytes]:
+    blobs = []
+    for img in list(getattr(ws, "_images", [])):
+        try:
+            blobs.append(img._data())
+        except Exception:
+            continue
+    return blobs
+
+
 def _collect_images(src: Workbook) -> list[tuple[str, bytes, object]]:
-    jobs = []
+    blobs: list[bytes] = []
+    if SHEET_HOW in src.sheetnames:
+        blobs.extend(_images_on(src[SHEET_HOW]))
     for name in src.sheetnames:
-        for img in list(getattr(src[name], "_images", [])):
-            try:
-                blob = img._data()
-            except Exception:
-                continue
-            jobs.append((name, blob, img.anchor))
-    return jobs
+        if name == SHEET_HOW:
+            continue
+        blobs.extend(_images_on(src[name]))
+    if not blobs:
+        return []
+    return [(SHEET_HOW, blobs[0], "A1")]

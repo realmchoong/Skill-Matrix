@@ -16,7 +16,7 @@ Start with **Look at**, then **From year** and **To year**:
 
 The yellow **Skillset** dropdown is always there. It is used when Look at is **Skillsets**.
 
-The top-left box on each sheet is for a **company logo** (Insert → Pictures, then resize to the box).
+The company logo lives on **How to Use** only. Insert → Pictures → **Place in Cell** in the top-left box. The other tabs show that same picture. Do not choose Place over Cells, or the other tabs will not update.
 
 ## Skillsets
 
